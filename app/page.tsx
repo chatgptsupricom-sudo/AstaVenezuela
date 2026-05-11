@@ -1,15 +1,21 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import Image from 'next/image';
-import { Navbar } from '@/components/Navbar';
-import dynamic from 'next/dynamic';
-import { FEATURED_PRODUCTS, BRANDS } from '@/lib/products';
+import { Navbar } from "@/components/Navbar";
+import { BRANDS, FEATURED_PRODUCTS } from "@/lib/products";
+import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import { useState } from "react";
 
-const MascotScene = dynamic(() => import('@/components/MascotScene').then(mod => ({ default: mod.MascotScene })), {
-  ssr: false,
-});
+const MascotScene = dynamic(
+  () =>
+    import("@/components/MascotScene").then((mod) => ({
+      default: mod.MascotScene,
+    })),
+  {
+    ssr: false,
+  },
+);
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -27,99 +33,115 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.8, ease: 'easeOut' },
+    transition: { duration: 0.8, ease: "easeOut" },
   },
 };
 
 export default function Home() {
-  const [activeCategory, setActiveCategory] = useState('Tóneres HP');
+  const [activeCategory, setActiveCategory] = useState("Tóneres HP");
 
   return (
     <>
       <Navbar />
       <main className="bg-[#f3f5f4] overflow-hidden">
-        {/* HERO SECTION */}
-        <section className="relative min-h-screen bg-gradient-to-br from-[#44abff] via-[#4db8ff] to-[#0b63cd] overflow-hidden flex items-center justify-center pt-20">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl" />
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl" />
+        {/* HERO SECTION RENOVADO - ATRACTIVO Y MINIMALISTA */}
+        <section className="relative min-h-screen bg-white flex items-center justify-center pt-20 overflow-hidden">
+          {/* Fondo sutil con gradiente suave y formas orgánicas */}
+          <div className="absolute inset-0 z-0">
+            <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[120px]" />
+            <div className="absolute bottom-[5%] left-[-10%] w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[100px]" />
           </div>
 
           <div className="container mx-auto px-6 relative z-10 max-w-7xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              {/* Left: Content */}
+              {/* Lado Izquierdo: Contenido con jerarquía moderna */}
               <motion.div
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 1 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="text-center lg:text-left"
               >
-                <motion.img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ASTA%20LOGO-vtQAMg0Q2u2aytIUDPgrmSZqP65VBq.png"
-                  alt="ASTA Logo"
-                  className="h-24 w-auto mb-8"
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                />
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-bold tracking-widest uppercase mb-8"
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                  </span>
+                  Calidad Premium Certificada
+                </motion.div>
 
-                <h1 className="text-5xl lg:text-7xl font-black text-white leading-tight mb-6">
-                  Consumibles{' '}
-                  <span className="block text-yellow-300">Premium para</span>
-                  Impresoras
+                <h1 className="text-6xl lg:text-[100px] font-black text-slate-900 leading-[0.85] tracking-tight mb-8">
+                  Impresión <br />
+                  <span className="text-blue-600">Perfecta.</span>
                 </h1>
 
-                <p className="text-lg lg:text-xl text-white/90 mb-8 max-w-lg leading-relaxed">
-                  Desde 1995, ASTA es la marca número 1 en calidad y confiabilidad de consumibles para impresoras en Venezuela. Tóneres, tintas y cartuchos con garantía de rendimiento superior.
+                <p className="text-lg lg:text-xl text-slate-500 max-w-lg mx-auto lg:mx-0 leading-relaxed mb-10">
+                  Potencia tu productividad con consumibles de alto rendimiento.
+                  Desde 1995, la marca #1 de Venezuela en nitidez y garantía.
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start">
                   <motion.a
                     href="/catalog"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-8 py-4 bg-white text-[#0b63cd] rounded-lg font-bold text-lg hover:bg-gray-100 transition-colors w-full sm:w-auto text-center"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-bold text-lg shadow-2xl shadow-slate-900/20 transition-all text-center"
                   >
-                    Ver Catálogo Completo
+                    Ver Catálogo
                   </motion.a>
                   <motion.a
                     href="/contact"
-                    whileHover={{ scale: 1.05, borderColor: 'white' }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-8 py-4 border-2 border-white text-white rounded-lg font-bold text-lg hover:bg-white/10 transition-colors w-full sm:w-auto text-center"
+                    whileHover={{
+                      backgroundColor: "#f8fafc",
+                      borderColor: "#cbd5e1",
+                    }}
+                    className="px-10 py-5 border-2 border-slate-200 text-slate-600 rounded-2xl font-bold text-lg transition-all text-center"
                   >
-                    Contáctanos
+                    Asesoría Gratuita
                   </motion.a>
                 </div>
 
-                <div className="flex gap-8 mt-12 text-white">
+                {/* Stats minimalistas */}
+                <div className="flex justify-center lg:justify-start gap-12 mt-16 pt-8 border-t border-slate-100 text-slate-400">
                   <div>
-                    <p className="text-3xl font-bold">200+</p>
-                    <p className="text-sm">Productos Disponibles</p>
+                    <p className="text-3xl font-black text-slate-900">200+</p>
+                    <p className="text-xs uppercase tracking-widest font-bold">
+                      Modelos
+                    </p>
                   </div>
                   <div>
-                    <p className="text-3xl font-bold">8</p>
-                    <p className="text-sm">Marcas Soportadas</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold">30K+</p>
-                    <p className="text-sm">Clientes Satisfechos</p>
+                    <p className="text-3xl font-black text-slate-900">30K+</p>
+                    <p className="text-xs uppercase tracking-widest font-bold">
+                      Clientes
+                    </p>
                   </div>
                 </div>
               </motion.div>
 
-              {/* Right: Image Carousel */}
+              {/* Lado Derecho: Escenario Dinámico con la Mascota */}
               <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 1 }}
-                className="relative h-96 lg:h-full flex items-center justify-center"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+                className="relative h-[500px] lg:h-[650px] flex items-center justify-center"
               >
-                <div className="relative w-full h-96">
+                {/* Elemento de diseño: Círculo de fondo minimalista */}
+                <div className="absolute w-[70%] aspect-square bg-blue-50 rounded-full blur-3xl opacity-60" />
+                <div className="absolute w-[80%] aspect-square border border-blue-100 rounded-full animate-[spin_30s_linear_infinite] opacity-40" />
+
+                <div className="relative w-full h-full z-10 flex items-center justify-center">
                   <Image
-                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/68-WIfsmGWGp41qhO0VUBG5RCWuYl57Xd.jpg"
-                    alt="ASTA Products"
-                    fill
-                    className="object-contain"
+                    src="/ASTA MASCOTA.png"
+                    alt="Mascota ASTA"
+                    width={600}
+                    height={600}
+                    priority
+                    className="object-contain drop-shadow-[0_20px_50px_rgba(59,130,246,0.2)] hover:scale-105 transition-transform duration-500"
+                    style={{ height: "auto", width: "auto" }}
                   />
                 </div>
               </motion.div>
@@ -127,21 +149,31 @@ export default function Home() {
           </div>
         </section>
 
-        {/* FEATURES SECTION */}
-        <section className="py-20 bg-white">
+        {/* --- EL RESTO DE TUS SECCIONES (No se tocan) --- */}
+        {/* FEATURES SECTION - LIQUID GLASS 2.0 */}
+        <section className="py-24 bg-[#f0f4f8] relative overflow-hidden">
+          {/* Luces cinéticas de fondo */}
+          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-400/10 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-indigo-300/10 rounded-full blur-[120px]" />
+
           <div className="container mx-auto px-6 max-w-7xl">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
-              className="text-center mb-16"
+              className="text-center mb-24"
             >
-              <h2 className="text-4xl lg:text-5xl font-black text-[#0b63cd] mb-4">
-                ¿Por Qué Elegir ASTA?
+              <h2 className="text-sm font-black text-blue-600 uppercase tracking-[0.4em] mb-4">
+                Ecosistema de Calidad
               </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Somos especialistas en soluciones de impresión con los más altos estándares de calidad
+              <h3 className="text-5xl lg:text-7xl font-black text-slate-900 mb-8 tracking-tighter">
+                ¿Por Qué ASTA?
+              </h3>
+              <p className="text-xl text-slate-500 max-w-3xl mx-auto font-medium leading-relaxed">
+                No solo vendemos consumibles; encapsulamos ingeniería de
+                precisión en cada cartucho para que tu flujo de trabajo nunca se
+                detenga.
               </p>
             </motion.div>
 
@@ -150,48 +182,128 @@ export default function Home() {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-8"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
             >
               {[
                 {
-                  title: 'Calidad Premium',
-                  description: 'Nuestros productos están fabricados bajo estrictos estándares internacionales para garantizar la mejor calidad.',
-                  icon: '⭐',
+                  title: "Calidad Premium",
+                  icon: "⭐",
+                  desc: "Nuestros tóneres pasan por 12 pruebas de control antes de llegar a ti.",
+                  points: [
+                    "Certificación ISO 9001",
+                    "Negros más profundos",
+                    "Cero manchas",
+                  ],
+                  color: "from-blue-400/30",
                 },
                 {
-                  title: 'Máximo Rendimiento',
-                  description: 'Tóneres e tintas que ofrecen más páginas impresas y colores más vibrantes que la competencia.',
-                  icon: '🚀',
+                  title: "Máximo Rendimiento",
+                  icon: "🚀",
+                  desc: "Diseñados para exprimir cada gota de tinta y gramo de polvo.",
+                  points: [
+                    "+20% páginas extra",
+                    "Carga ultra-rápida",
+                    "Ahorro energético",
+                  ],
+                  color: "from-cyan-400/30",
                 },
                 {
-                  title: 'Garantía Completa',
-                  description: 'Cada producto ASTA incluye garantía de satisfacción y soporte técnico dedicado.',
-                  icon: '✅',
+                  title: "Garantía Total",
+                  icon: "✅",
+                  desc: "Si el producto falla, nosotros respondemos. Sin preguntas incómodas.",
+                  points: [
+                    "Soporte 24/7",
+                    "Cambio inmediato",
+                    "Protección de equipo",
+                  ],
+                  color: "from-emerald-400/30",
                 },
                 {
-                  title: 'Stock Garantizado',
-                  description: 'Más de 200 SKUs disponibles en inventario para entregas rápidas y confiables.',
-                  icon: '📦',
+                  title: "Stock Inmediato",
+                  icon: "📦",
+                  desc: "El inventario más grande del país a tu disposición.",
+                  points: ["Envío en 24h", "200+ Modelos", "Logística propia"],
+                  color: "from-slate-400/30",
                 },
                 {
-                  title: 'Precios Competitivos',
-                  description: 'La mejor relación calidad-precio del mercado con opciones para todos los presupuestos.',
-                  icon: '💰',
+                  title: "Precios de Fábrica",
+                  icon: "💰",
+                  desc: "Eliminamos intermediarios para darte el mejor costo por página.",
+                  points: [
+                    "Planes corporativos",
+                    "Descuentos por volumen",
+                    "Crédito aliado",
+                  ],
+                  color: "from-indigo-400/30",
                 },
                 {
-                  title: 'Compatible Universal',
-                  description: 'Productos compatibles con HP, Canon, Brother, Samsung, Epson y más marcas líderes.',
-                  icon: '🔧',
+                  title: "Compatibilidad",
+                  icon: "🔧",
+                  desc: "Integración perfecta. Tu impresora no notará la diferencia.",
+                  points: [
+                    "Chips de última gen",
+                    "Ajuste milimétrico",
+                    "Update friendly",
+                  ],
+                  color: "from-rose-400/30",
                 },
               ].map((feature, idx) => (
                 <motion.div
                   key={idx}
                   variants={itemVariants}
-                  className="p-8 bg-gradient-to-br from-[#f3f5f4] to-white border border-gray-200 rounded-xl hover:shadow-lg transition-shadow"
+                  whileHover={{ y: -15 }}
+                  className="group relative p-12 rounded-[3.5rem] transition-all duration-700
+                     bg-white/5 backdrop-blur-3xl
+                     border-t border-l border-white/60 border-b border-r border-white/10
+                     shadow-[25px_25px_50px_rgba(0,0,0,0.03),inset_0_0_20px_rgba(255,255,255,0.2)]
+                     hover:shadow-[0_50px_100px_-20px_rgba(59,130,246,0.15),inset_0_0_30px_rgba(255,255,255,0.4)]
+                     overflow-hidden"
                 >
-                  <p className="text-5xl mb-4">{feature.icon}</p>
-                  <h3 className="text-xl font-bold text-[#0b63cd] mb-3">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
+                  {/* Capa de Vidrio Líquido (Shimmer) */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+                  </div>
+
+                  {/* Cáustica de fondo (Glow de color) */}
+                  <div
+                    className={`absolute -bottom-20 -right-20 w-64 h-64 bg-gradient-to-br ${feature.color} to-transparent blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity duration-700`}
+                  />
+
+                  {/* Header de la tarjeta */}
+                  <div className="flex items-center gap-6 mb-8 relative z-10">
+                    <div
+                      className="w-16 h-16 bg-white/30 backdrop-blur-2xl rounded-2xl flex items-center justify-center text-3xl
+                            shadow-[inset_0_0_15px_rgba(255,255,255,0.5)] border border-white/40
+                            group-hover:rotate-[10deg] transition-transform duration-500"
+                    >
+                      {feature.icon}
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                      {feature.title}
+                    </h3>
+                  </div>
+
+                  <p className="text-slate-600 leading-relaxed font-medium mb-8 relative z-10">
+                    {feature.desc}
+                  </p>
+
+                  {/* Listado de contenido extra */}
+                  <ul className="space-y-3 relative z-10">
+                    {feature.points.map((point, pIdx) => (
+                      <li
+                        key={pIdx}
+                        className="flex items-center gap-3 text-sm font-bold text-slate-500 group-hover:text-blue-600 transition-colors"
+                      >
+                        <div className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Detalle decorativo inferior */}
+                  <div className="absolute bottom-6 right-10 text-xs font-black text-blue-600/20 uppercase tracking-widest group-hover:text-blue-600/40 transition-colors">
+                    ASTA
+                  </div>
                 </motion.div>
               ))}
             </motion.div>
@@ -237,18 +349,26 @@ export default function Home() {
                       fill
                       className="object-cover hover:scale-110 transition-transform duration-300"
                     />
-                    <div className="absolute top-4 right-4 bg-[#0b63cd] text-white px-3 py-1 rounded-full text-sm font-bold">
+                    {/* <div className="absolute top-4 right-4 bg-[#0b63cd] text-white px-3 py-1 rounded-full text-sm font-bold">
                       {product.stock} stock
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className="p-6">
-                    <p className="text-sm text-[#44abff] font-semibold mb-2">{product.category}</p>
-                    <h3 className="text-lg font-bold text-[#0b63cd] mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">{product.description}</p>
+                    <p className="text-sm text-[#44abff] font-semibold mb-2">
+                      {product.category}
+                    </p>
+                    <h3 className="text-lg font-bold text-[#0b63cd] mb-2 line-clamp-2">
+                      {product.name}
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      {product.description}
+                    </p>
 
                     <div className="flex justify-between items-center">
-                      <p className="text-2xl font-black text-[#44abff]">${product.price}</p>
+                      {/* <p className="text-2xl font-black text-[#44abff]">
+                        ${product.price}
+                      </p> */}
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
@@ -314,8 +434,12 @@ export default function Home() {
                   className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#f3f5f4] to-white border border-gray-200 rounded-lg hover:border-[#44abff] hover:shadow-md transition-all"
                 >
                   <p className="text-4xl mb-2">{brand.logo}</p>
-                  <p className="font-bold text-[#0b63cd] text-center">{brand.name}</p>
-                  <p className="text-sm text-gray-500 mt-1">{brand.products} productos</p>
+                  <p className="font-bold text-[#0b63cd] text-center">
+                    {brand.name}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {brand.products} productos
+                  </p>
                 </motion.div>
               ))}
             </motion.div>
@@ -348,10 +472,28 @@ export default function Home() {
               className="grid grid-cols-1 md:grid-cols-4 gap-8"
             >
               {[
-                { step: '1', title: 'Selecciona', description: 'Elige el producto que necesitas de nuestro amplio catálogo' },
-                { step: '2', title: 'Consulta', description: 'Revisa especificaciones, compatibilidad y precios' },
-                { step: '3', title: 'Ordena', description: 'Realiza tu pedido con entrega rápida y segura' },
-                { step: '4', title: 'Disfruta', description: 'Recibe y usa tus productos con garantía ASTA' },
+                {
+                  step: "1",
+                  title: "Selecciona",
+                  description:
+                    "Elige el producto que necesitas de nuestro amplio catálogo",
+                },
+                {
+                  step: "2",
+                  title: "Consulta",
+                  description:
+                    "Revisa especificaciones, compatibilidad y precios",
+                },
+                {
+                  step: "3",
+                  title: "Ordena",
+                  description: "Realiza tu pedido con entrega rápida y segura",
+                },
+                {
+                  step: "4",
+                  title: "Disfruta",
+                  description: "Recibe y usa tus productos con garantía ASTA",
+                },
               ].map((item, idx) => (
                 <motion.div
                   key={idx}
@@ -359,8 +501,12 @@ export default function Home() {
                   className="relative"
                 >
                   <div className="bg-white/10 backdrop-blur-md rounded-lg p-8 border border-white/20">
-                    <div className="text-5xl font-black text-yellow-300 mb-4">{item.step}</div>
-                    <h3 className="text-2xl font-bold text-white mb-3">{item.title}</h3>
+                    <div className="text-5xl font-black text-yellow-300 mb-4">
+                      {item.step}
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-3">
+                      {item.title}
+                    </h3>
                     <p className="text-white/80">{item.description}</p>
                   </div>
                   {idx < 3 && (
@@ -401,21 +547,24 @@ export default function Home() {
             >
               {[
                 {
-                  name: 'Carlos Rodríguez',
-                  company: 'Copias Rápidas SRL',
-                  comment: 'Los tóneres ASTA tienen la mejor relación calidad-precio. Nuestros clientes notaron inmediatamente la mejora en las impresiones.',
+                  name: "Carlos Rodríguez",
+                  company: "Copias Rápidas SRL",
+                  comment:
+                    "Los tóneres ASTA tienen la mejor relación calidad-precio. Nuestros clientes notaron inmediatamente la mejora en las impresiones.",
                   rating: 5,
                 },
                 {
-                  name: 'María López',
-                  company: 'Imprenta Digital Plus',
-                  comment: 'Excelente servicio y productos de calidad. El equipo de ASTA siempre está disponible para ayudarnos.',
+                  name: "María López",
+                  company: "Imprenta Digital Plus",
+                  comment:
+                    "Excelente servicio y productos de calidad. El equipo de ASTA siempre está disponible para ayudarnos.",
                   rating: 5,
                 },
                 {
-                  name: 'Juan Pérez',
-                  company: 'Centro de Impresión Moderno',
-                  comment: 'Llevar ASTA como distribuidor ha sido la mejor decisión para mi negocio. Stock garantizado y precios competitivos.',
+                  name: "Juan Pérez",
+                  company: "Centro de Impresión Moderno",
+                  comment:
+                    "Llevar ASTA como distribuidor ha sido la mejor decisión para mi negocio. Stock garantizado y precios competitivos.",
                   rating: 5,
                 },
               ].map((testimonial, idx) => (
@@ -426,13 +575,21 @@ export default function Home() {
                 >
                   <div className="flex gap-1 mb-4">
                     {Array.from({ length: testimonial.rating }).map((_, i) => (
-                      <span key={i} className="text-yellow-400 text-xl">★</span>
+                      <span key={i} className="text-yellow-400 text-xl">
+                        ★
+                      </span>
                     ))}
                   </div>
-                  <p className="text-gray-700 mb-6 italic">"{testimonial.comment}"</p>
+                  <p className="text-gray-700 mb-6 italic">
+                    "{testimonial.comment}"
+                  </p>
                   <div>
-                    <p className="font-bold text-[#0b63cd]">{testimonial.name}</p>
-                    <p className="text-sm text-gray-600">{testimonial.company}</p>
+                    <p className="font-bold text-[#0b63cd]">
+                      {testimonial.name}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {testimonial.company}
+                    </p>
                   </div>
                 </motion.div>
               ))}
@@ -467,28 +624,28 @@ export default function Home() {
             >
               {[
                 {
-                  q: '¿Qué garantía tienen los productos ASTA?',
-                  a: 'Todos nuestros productos incluyen garantía de satisfacción. Si no estás conforme con la calidad, ofrecemos cambio o reembolso.',
+                  q: "¿Qué garantía tienen los productos ASTA?",
+                  a: "Todos nuestros productos incluyen garantía de satisfacción. Si no estás conforme con la calidad, ofrecemos cambio o reembolso.",
                 },
                 {
-                  q: '¿Son los tóneres ASTA realmente compatibles?',
-                  a: 'Sí, cada producto está testado para garantizar 100% de compatibilidad con las impresoras de cada marca.',
+                  q: "¿Son los tóneres ASTA realmente compatibles?",
+                  a: "Sí, cada producto está testado para garantizar 100% de compatibilidad con las impresoras de cada marca.",
                 },
                 {
-                  q: '¿Cuál es el tiempo de entrega?',
-                  a: 'Entregamos en 24-48 horas en el área metropolitana. Para otras zonas, 3-5 días hábiles según disponibilidad.',
+                  q: "¿Cuál es el tiempo de entrega?",
+                  a: "Entregamos en 24-48 horas en el área metropolitana. Para otras zonas, 3-5 días hábiles según disponibilidad.",
                 },
                 {
-                  q: '¿Ofrecen descuentos por volumen?',
-                  a: 'Sí, contamos con programas especiales de precios para distribuidores y mayoristas. Contáctanos para más información.',
+                  q: "¿Ofrecen descuentos por volumen?",
+                  a: "Sí, contamos con programas especiales de precios para distribuidores y mayoristas. Contáctanos para más información.",
                 },
                 {
-                  q: '¿Cómo puedo ser distribuidor autorizado de ASTA?',
-                  a: 'Tenemos un programa de asociación dedicado. Escríbenos a info@asta.com para conocer los requisitos.',
+                  q: "¿Cómo puedo ser distribuidor autorizado de ASTA?",
+                  a: "Tenemos un programa de asociación dedicado. Escríbenos a info@asta.com para conocer los requisitos.",
                 },
                 {
-                  q: '¿Aceptan pagos internacionales?',
-                  a: 'Aceptamos transferencias bancarias, efectivo, cheques y métodos de pago electrónicos según tu ubicación.',
+                  q: "¿Aceptan pagos internacionales?",
+                  a: "Aceptamos transferencias bancarias, efectivo, cheques y métodos de pago electrónicos según tu ubicación.",
                 },
               ].map((faq, idx) => (
                 <motion.div
@@ -496,7 +653,9 @@ export default function Home() {
                   variants={itemVariants}
                   className="border border-gray-200 rounded-lg p-6 hover:border-[#44abff] transition-colors"
                 >
-                  <h3 className="font-bold text-lg text-[#0b63cd] mb-2">{faq.q}</h3>
+                  <h3 className="font-bold text-lg text-[#0b63cd] mb-2">
+                    {faq.q}
+                  </h3>
                   <p className="text-gray-600">{faq.a}</p>
                 </motion.div>
               ))}
@@ -518,14 +677,16 @@ export default function Home() {
                   Conoce a Nuestro Amigo Panda
                 </h2>
                 <p className="text-xl text-white/90 mb-8">
-                  Desde el 95, el panda ASTA ha sido símbolo de amabilidad, confiabilidad y calidad en la familia de consumibles. ¡Es nuestro embajador favorito!
+                  Desde el 95, el panda ASTA ha sido símbolo de amabilidad,
+                  confiabilidad y calidad en la familia de consumibles. ¡Es
+                  nuestro embajador favorito!
                 </p>
                 <div className="space-y-4">
                   {[
-                    '🎯 Experto en soluciones de impresión',
-                    '💡 Siempre trae las mejores ideas',
-                    '🤝 Tu socio de confianza',
-                    '🌟 Garantía ASTA en cada producto',
+                    "🎯 Experto en soluciones de impresión",
+                    "💡 Siempre trae las mejores ideas",
+                    "🤝 Tu socio de confianza",
+                    "🌟 Garantía ASTA en cada producto",
                   ].map((item, idx) => (
                     <motion.div
                       key={idx}
@@ -535,7 +696,7 @@ export default function Home() {
                       viewport={{ once: true }}
                       className="flex items-center gap-3 text-white"
                     >
-                      <span className="text-2xl">{item.split(' ')[0]}</span>
+                      <span className="text-2xl">{item.split(" ")[0]}</span>
                       <span>{item.substring(3)}</span>
                     </motion.div>
                   ))}
@@ -577,7 +738,8 @@ export default function Home() {
                 ¿Listo para Optimizar tus Impresiones?
               </h2>
               <p className="text-xl mb-8 max-w-2xl mx-auto">
-                Únete a miles de clientes que ya confían en ASTA para sus necesidades de impresión
+                Únete a miles de clientes que ya confían en ASTA para sus
+                necesidades de impresión
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -601,7 +763,8 @@ export default function Home() {
 
               <div className="mt-8 pt-8 border-t border-white/20">
                 <p className="text-white/80">
-                  📧 info@asta.com | 📞 +58 (0) 212 XXX-XXXX | 🌐 www.asta.com.ve
+                  📧 info@asta.com | 📞 +58 (0) 212 XXX-XXXX | 🌐
+                  www.asta.com.ve
                 </p>
               </div>
             </motion.div>
@@ -625,34 +788,85 @@ export default function Home() {
               <div>
                 <h4 className="font-bold mb-4">Productos</h4>
                 <ul className="space-y-2 text-white/80">
-                  <li><a href="#" className="hover:text-white">Tóneres</a></li>
-                  <li><a href="#" className="hover:text-white">Tintas</a></li>
-                  <li><a href="#" className="hover:text-white">Accesorios</a></li>
-                  <li><a href="#" className="hover:text-white">Ofertas</a></li>
+                  <li>
+                    <a href="#" className="hover:text-white">
+                      Tóneres
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white">
+                      Tintas
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white">
+                      Accesorios
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white">
+                      Ofertas
+                    </a>
+                  </li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-bold mb-4">Empresa</h4>
                 <ul className="space-y-2 text-white/80">
-                  <li><a href="#" className="hover:text-white">Sobre Nosotros</a></li>
-                  <li><a href="#" className="hover:text-white">Distribuidor</a></li>
-                  <li><a href="#" className="hover:text-white">Contacto</a></li>
-                  <li><a href="#" className="hover:text-white">Blog</a></li>
+                  <li>
+                    <a href="#" className="hover:text-white">
+                      Sobre Nosotros
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white">
+                      Distribuidor
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white">
+                      Contacto
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white">
+                      Blog
+                    </a>
+                  </li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-bold mb-4">Síguenos</h4>
                 <ul className="space-y-2 text-white/80">
-                  <li><a href="#" className="hover:text-white">Facebook</a></li>
-                  <li><a href="#" className="hover:text-white">Instagram</a></li>
-                  <li><a href="#" className="hover:text-white">LinkedIn</a></li>
-                  <li><a href="#" className="hover:text-white">YouTube</a></li>
+                  <li>
+                    <a href="#" className="hover:text-white">
+                      Facebook
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white">
+                      Instagram
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white">
+                      LinkedIn
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="hover:text-white">
+                      YouTube
+                    </a>
+                  </li>
                 </ul>
               </div>
             </div>
 
             <div className="border-t border-white/20 pt-8 text-center text-white/80">
-              <p>&copy; 2025 ASTA - Todos los derechos reservados | Política de Privacidad | Términos de Servicio</p>
+              <p>
+                &copy; 2025 ASTA - Todos los derechos reservados | Política de
+                Privacidad | Términos de Servicio
+              </p>
             </div>
           </div>
         </footer>
