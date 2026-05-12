@@ -3,6 +3,7 @@
 import { Navbar } from "@/components/Navbar";
 import { BRANDS, FEATURED_PRODUCTS } from "@/lib/products";
 import { motion } from "framer-motion";
+import { FileText, Search, ShieldCheck, ShoppingCart } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useState } from "react";
@@ -61,7 +62,7 @@ export default function Home() {
                 transition={{ duration: 0.8, ease: "easeOut" }}
                 className="text-center lg:text-left"
               >
-                <motion.div
+                {/* <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
@@ -72,7 +73,7 @@ export default function Home() {
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                   </span>
                   Calidad Premium Certificada
-                </motion.div>
+                </motion.div> */}
 
                 <h1 className="text-6xl lg:text-[100px] font-black text-slate-900 leading-[0.85] tracking-tight mb-8">
                   Impresión <br />
@@ -402,121 +403,147 @@ export default function Home() {
         </section>
 
         {/* BRANDS SECTION */}
-        <section className="py-20 bg-white">
-          <div className="container mx-auto px-6 max-w-7xl">
+        {/* BRANDS SECTION - CAROUSEL ANIMADO INFINITO */}
+        <section className="py-24 bg-white border-y border-slate-50 overflow-hidden">
+          <div className="container mx-auto px-6 mb-16">
+            <h2 className="text-center text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-4">
+              Marcas Compatibles
+            </h2>
+          </div>
+          <div className="relative flex group">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="text-center mb-16"
+              className="flex whitespace-nowrap gap-20 items-center py-4"
+              animate={{ x: [0, -1000] }}
+              transition={{
+                x: { repeat: Infinity, duration: 25, ease: "linear" },
+              }}
             >
-              <h2 className="text-4xl lg:text-5xl font-black text-[#0b63cd] mb-4">
-                Marcas Compatibles
-              </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Productos compatibles con las marcas líderes de impresoras
-              </p>
-            </motion.div>
-
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6"
-            >
-              {BRANDS.map((brand, idx) => (
-                <motion.div
+              {[...BRANDS, ...BRANDS].map((brand, idx) => (
+                <div
                   key={idx}
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.1 }}
-                  className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#f3f5f4] to-white border border-gray-200 rounded-lg hover:border-[#44abff] hover:shadow-md transition-all"
+                  className="flex items-center justify-center w-32 h-12 grayscale opacity-30 hover:grayscale-0 hover:opacity-100 transition-all duration-500"
                 >
-                  <p className="text-4xl mb-2">{brand.logo}</p>
-                  <p className="font-bold text-[#0b63cd] text-center">
-                    {brand.name}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {brand.products} productos
-                  </p>
-                </motion.div>
+                  <Image
+                    src={`/logo/${brand.name.toLowerCase()}.png`}
+                    alt={brand.name}
+                    width={120}
+                    height={40}
+                    className="object-contain"
+                  />
+                </div>
               ))}
             </motion.div>
+            <div className="absolute inset-y-0 left-0 w-40 bg-gradient-to-r from-white to-transparent z-10" />
+            <div className="absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-white to-transparent z-10" />
           </div>
         </section>
 
-        {/* HOW IT WORKS SECTION */}
-        <section className="py-20 bg-gradient-to-br from-[#44abff] to-[#0b63cd]">
-          <div className="container mx-auto px-6 max-w-7xl">
+        {/* HOW IT WORKS SECTION - DARK PREMIUM EDITION */}
+        <section className="py-32 relative overflow-hidden bg-[#0a0f1a]">
+          {/* Luces ambientales de fondo */}
+          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-indigo-600/5 rounded-full blur-[120px] pointer-events-none" />
+
+          <div className="container mx-auto px-6 max-w-7xl relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
-              className="text-center mb-16"
+              className="text-center mb-24"
             >
-              <h2 className="text-4xl lg:text-5xl font-black text-white mb-4">
-                Cómo Funcionamos
+              <h2 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.6em] mb-4">
+                Ecosistema Logístico
               </h2>
-              <p className="text-xl text-white/80 max-w-2xl mx-auto">
-                Un proceso simple para conseguir los mejores consumibles
-              </p>
+              <h3 className="text-5xl lg:text-7xl font-black text-white mb-6 tracking-tighter">
+                Cómo <span className="text-blue-500">Funcionamos.</span>
+              </h3>
+              <div className="w-20 h-1.5 bg-blue-600 mx-auto rounded-full mb-8" />
             </motion.div>
 
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              className="grid grid-cols-1 md:grid-cols-4 gap-8"
-            >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
+              {/* Línea conectora animada (Solo visible en desktop) */}
+              <div className="hidden lg:block absolute top-[45%] left-0 w-full h-[2px] bg-white/5 z-0">
+                <motion.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: "100%" }}
+                  transition={{ duration: 2, ease: "easeInOut" }}
+                  className="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400"
+                />
+              </div>
+
               {[
                 {
-                  step: "1",
+                  step: "01",
                   title: "Selecciona",
                   description:
-                    "Elige el producto que necesitas de nuestro amplio catálogo",
+                    "Explora nuestro catálogo elite y elige la ingeniería de precisión que tu impresora merece.",
+                  icon: <Search className="w-8 h-8" />, // Requiere importar Search de lucide-react
+                  color: "from-blue-400 to-blue-600",
                 },
                 {
-                  step: "2",
+                  step: "02",
                   title: "Consulta",
                   description:
-                    "Revisa especificaciones, compatibilidad y precios",
+                    "Valida especificaciones y compatibilidad total con el apoyo de nuestros expertos técnicos.",
+                  icon: <FileText className="w-8 h-8" />, // Requiere importar FileText de lucide-react
+                  color: "from-blue-500 to-indigo-600",
                 },
                 {
-                  step: "3",
+                  step: "03",
                   title: "Ordena",
-                  description: "Realiza tu pedido con entrega rápida y segura",
+                  description:
+                    "Gestión de pedido ágil con logística prioritaria para que tu flujo de trabajo nunca se detenga.",
+                  icon: <ShoppingCart className="w-8 h-8" />, // Requiere importar ShoppingCart de lucide-react
+                  color: "from-indigo-500 to-purple-600",
                 },
                 {
-                  step: "4",
+                  step: "04",
                   title: "Disfruta",
-                  description: "Recibe y usa tus productos con garantía ASTA",
+                  description:
+                    "Recibe calidad certificada ASTA y experimenta la nitidez superior de la marca líder.",
+                  icon: <ShieldCheck className="w-8 h-8" />, // Requiere importar ShieldCheck de lucide-react
+                  color: "from-blue-600 to-cyan-500",
                 },
               ].map((item, idx) => (
                 <motion.div
                   key={idx}
-                  variants={itemVariants}
-                  className="relative"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.2 }}
+                  viewport={{ once: true }}
+                  className="group relative z-10"
                 >
-                  <div className="bg-white/10 backdrop-blur-md rounded-lg p-8 border border-white/20">
-                    <div className="text-5xl font-black text-yellow-300 mb-4">
-                      {item.step}
+                  {/* Card con efecto Glassmorphism */}
+                  <div className="h-full p-10 rounded-[3rem] bg-white/[0.03] border border-white/[0.08] backdrop-blur-2xl transition-all duration-500 hover:bg-white/[0.07] hover:border-blue-500/30 hover:-translate-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+                    {/* Header de la Card: Icono + Número */}
+                    <div className="flex justify-between items-center mb-10">
+                      <div
+                        className={`p-4 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500`}
+                      >
+                        {item.icon}
+                      </div>
+                      <span className="text-5xl font-black text-white/5 group-hover:text-blue-500/10 transition-colors duration-500 select-none">
+                        {item.step}
+                      </span>
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-3">
+
+                    <h4 className="text-2xl font-black text-white mb-4 tracking-tight">
                       {item.title}
-                    </h3>
-                    <p className="text-white/80">{item.description}</p>
-                  </div>
-                  {idx < 3 && (
-                    <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 text-white text-2xl">
-                      →
+                    </h4>
+                    <p className="text-slate-400 leading-relaxed font-medium text-sm group-hover:text-slate-200 transition-colors">
+                      {item.description}
+                    </p>
+
+                    {/* Detalle inferior interactivo */}
+                    <div className="mt-8 flex items-center gap-2">
+                      <div className="w-8 h-1 bg-blue-600 rounded-full group-hover:w-full transition-all duration-700" />
+                      <div className="w-1 h-1 bg-blue-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                  )}
+                  </div>
                 </motion.div>
               ))}
-            </motion.div>
+            </div>
           </div>
         </section>
 
