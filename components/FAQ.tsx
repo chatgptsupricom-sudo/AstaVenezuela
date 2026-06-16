@@ -1,32 +1,39 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
 
 const FAQS = [
   {
-    question: '¿Son los productos ASTA compatibles con todas las impresoras?',
-    answer: 'ASTA es compatible con las marcas principales como HP, Canon, Brother, Epson, Samsung y Xerox. Consulta nuestro catálogo completo para verificar tu modelo específico.',
+    question: "¿Son los productos ASTA compatibles con todas las impresoras?",
+    answer:
+      "ASTA es compatible con las marcas principales como HP, Canon, Brother, Epson, Samsung y Xerox. Consulta nuestro catálogo completo para verificar tu modelo específico.",
   },
   {
-    question: '¿Qué diferencia hay entre tóneres originales y compatibles ASTA?',
-    answer: 'Nuestros tóneres cumplen estrictos estándares de calidad, ofreciendo resultados tan nítidos y vibrantes como los originales, pero con un costo mucho más accesible.',
+    question:
+      "¿Qué diferencia hay entre tóneres originales y compatibles ASTA?",
+    answer:
+      "Nuestros tóneres cumplen estrictos estándares de calidad, ofreciendo resultados tan nítidos y vibrantes como los originales, pero con un costo mucho más accesible.",
   },
   {
-    question: '¿Cuál es el tiempo de entrega?',
-    answer: 'Contamos con stock garantizado y entregas rápidas. El tiempo varía según tu ubicación, pero trabajamos para entregar en el menor tiempo posible.',
+    question: "¿Cuál es el tiempo de entrega?",
+    answer:
+      "Contamos con stock garantizado y entregas rápidas. El tiempo varía según tu ubicación, pero trabajamos para entregar en el menor tiempo posible.",
   },
   {
-    question: '¿ASTA ofrece garantía en sus productos?',
-    answer: 'Sí, todos nuestros productos cuentan con garantía de calidad. Si hay algún problema, contamos con un equipo de soporte dedicado para asistirte.',
+    question: "¿ASTA ofrece garantía en sus productos?",
+    answer:
+      "Sí, todos nuestros productos cuentan con garantía de calidad. Si hay algún problema, contamos con un equipo de soporte dedicado para asistirte.",
   },
   {
-    question: '¿Cómo puedo convertirme en distribuidor ASTA?',
-    answer: 'Ofrecemos un programa de distribuidor con beneficios exclusivos, soporte dedicado y precios mayoristas. Contacta a nuestro equipo para conocer los requisitos.',
+    question: "¿Cómo puedo convertirme en distribuidor ASTA?",
+    answer:
+      "Ofrecemos un programa de distribuidor con beneficios exclusivos, soporte dedicado y precios mayoristas. Contacta a nuestro equipo para conocer los requisitos.",
   },
   {
-    question: '¿Dónde puedo comprar productos ASTA?',
-    answer: 'Puedes contactar directamente a nuestro equipo de ventas a través de nuestros canales de comunicación. Trabajamos con distribuidores autorizados en todo el país.',
+    question: "¿Dónde puedo comprar productos ASTA?",
+    answer:
+      "Puedes contactar directamente a nuestro equipo de ventas a través de nuestros canales de comunicación. Trabajamos con distribuidores autorizados en todo el país.",
   },
 ];
 
@@ -66,7 +73,9 @@ export function FAQ() {
                 onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
                 className="w-full px-8 py-6 flex items-center justify-between hover:bg-blue-50/50 transition-colors text-left"
               >
-                <h3 className="font-bold text-gray-900 text-lg pr-4">{faq.question}</h3>
+                <h3 className="font-bold text-gray-900 text-lg pr-4">
+                  {faq.question}
+                </h3>
 
                 <motion.svg
                   animate={{ rotate: openIndex === idx ? 180 : 0 }}
@@ -89,7 +98,7 @@ export function FAQ() {
                 {openIndex === idx && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
+                    animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"

@@ -2,6 +2,8 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+// 1. Importamos el componente (Asegúrate de que la ruta sea correcta)
+import { PageLoader } from "@/components/Loader";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -13,16 +15,14 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
 });
 
-// 1. Nueva forma de exportar el Viewport para eliminar el Warning de la consola
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#0b63cd", // Color corporativo de ASTA para la barra del navegador
+  themeColor: "#0b63cd",
 };
 
-// 2. Metadata limpia sin el campo 'viewport'
 export const metadata: Metadata = {
   title: {
     default: "ASTA | Consumibles Premium para Impresoras",
@@ -66,10 +66,11 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased bg-[#f3f5f4] text-slate-900 selection:bg-blue-100 selection:text-blue-900">
-        {/* Envoltorio principal para asegurar que el contenido ocupe el alto de pantalla */}
+        {/* 2. Añadimos el Loader aquí para que cubra toda la página al cargar */}
+        <PageLoader />
+
         <div className="flex flex-col min-h-screen">{children}</div>
 
-        {/* Solo carga Analytics en producción */}
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>
