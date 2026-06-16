@@ -70,7 +70,7 @@ export default function Home() {
               >
                 <h1 className="text-5xl md:text-7xl lg:text-[100px] font-black text-slate-900 leading-[0.9] lg:leading-[0.85] tracking-tight mb-6 lg:mb-8">
                   Impresión <br />
-                  <span className="text-blue-600">Perfecta.</span>
+                  <span className="text-blue-600">Perfecta</span>
                 </h1>
 
                 <p className="text-base md:text-lg lg:text-xl text-slate-500 max-w-lg mx-auto lg:mx-0 leading-relaxed mb-8 lg:mb-10 font-medium">
