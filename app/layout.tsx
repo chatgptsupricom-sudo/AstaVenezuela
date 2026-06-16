@@ -25,12 +25,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "ASTA | Consumibles Premium para Impresoras",
+    default: "ASTA | Consumibles para Impresoras",
     template: "%s | ASTA Venezuela",
   },
   description:
-    "Descubre ASTA, la marca número 1 en consumibles para impresoras. Tóneres, tintas y cartuchos de calidad premium con máximo rendimiento.",
-  generator: "v0.app",
+    "Descubre ASTA, la marca número #1 en consumibles para impresoras. Tóneres, tintas y cartuchos de calidad premium con máximo rendimiento.",
   keywords: [
     "ASTA",
     "Toner Venezuela",
