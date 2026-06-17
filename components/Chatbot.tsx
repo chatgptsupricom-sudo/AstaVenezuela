@@ -1,34 +1,38 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Send, X } from "lucide-react";
+import { RotateCcw, Send, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-// 🐼 Devuelve un sessionId persistente por navegador.
-// Se guarda en localStorage para que la conversación se recuerde
-// incluso si el usuario cierra y vuelve a abrir la página.
-const getSessionId = () => {
-  let id = localStorage.getItem("asta_session");
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem("asta_session", id);
-  }
-  return id;
+const INITIAL_MESSAGE = {
+  id: 1,
+  text: "¡Hola! Soy el Panda. ¿En qué puedo ayudarte hoy?",
+  sender: "bot",
 };
+const STORAGE_KEY = "asta_chat_history";
 
 export const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: "¡Hola! Soy el Panda. ¿En qué puedo ayudarte hoy?",
-      sender: "bot",
-    },
-  ]);
+  const [messages, setMessages] = useState([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Cargar historial desde localStorage al montar
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) setMessages(JSON.parse(saved));
+    } catch {}
+  }, []);
+
+  // Guardar historial cada vez que cambian los mensajes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    } catch {}
+  }, [messages]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -49,23 +53,12 @@ export const Chatbot = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          // 👇 Ahora mandamos el payload que n8n espera:
-          // action + sessionId (para la memoria) + chatInput (el mensaje)
-          body: JSON.stringify({
-            action: "sendMessage",
-            sessionId: getSessionId(),
-            chatInput: userMsg.text,
-          }),
-        },
+          body: JSON.stringify({ message: userMsg.text }),
+        }
       );
       const data = await res.json();
-      // El Chat Trigger puede responder como objeto o como array; cubrimos ambos.
-      const payload = Array.isArray(data) ? data[0] : data;
       const reply =
-        payload?.output ??
-        payload?.text ??
-        payload?.message ??
-        payload?.response ??
+        data?.output ?? data?.text ?? data?.message ?? data?.response ??
         "No pude obtener una respuesta. Intenta de nuevo.";
       setMessages((prev) => [
         ...prev,
@@ -118,12 +111,24 @@ export const Chatbot = () => {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    setMessages([INITIAL_MESSAGE]);
+                    localStorage.removeItem(STORAGE_KEY);
+                  }}
+                  title="Limpiar chat"
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <RotateCcw size={16} />
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             {/* Cuerpo de Mensajes */}
