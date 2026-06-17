@@ -5,6 +5,18 @@ import { Send, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
+// 🐼 Devuelve un sessionId persistente por navegador.
+// Se guarda en localStorage para que la conversación se recuerde
+// incluso si el usuario cierra y vuelve a abrir la página.
+const getSessionId = () => {
+  let id = localStorage.getItem("asta_session");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("asta_session", id);
+  }
+  return id;
+};
+
 export const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -15,6 +27,7 @@ export const Chatbot = () => {
     },
   ]);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,22 +36,50 @@ export const Chatbot = () => {
     }
   }, [messages, isOpen]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
     const userMsg = { id: Date.now(), text: input, sender: "user" };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch(
+        "https://n8n.supricom.com.ve/webhook/asta-chat-web/chat",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          // 👇 Ahora mandamos el payload que n8n espera:
+          // action + sessionId (para la memoria) + chatInput (el mensaje)
+          body: JSON.stringify({
+            action: "sendMessage",
+            sessionId: getSessionId(),
+            chatInput: userMsg.text,
+          }),
+        }
+      );
+      const data = await res.json();
+      // El Chat Trigger puede responder como objeto o como array; cubrimos ambos.
+      const payload = Array.isArray(data) ? data[0] : data;
+      const reply =
+        payload?.output ?? payload?.text ?? payload?.message ?? payload?.response ??
+        "No pude obtener una respuesta. Intenta de nuevo.";
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, text: reply, sender: "bot" },
+      ]);
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 1,
-          text: "Estamos procesando tu consulta. Un asesor humano se unirá pronto o puedes revisar nuestro catálogo.",
+          text: "Hubo un error al conectar con el asistente. Por favor intenta más tarde.",
           sender: "bot",
         },
       ]);
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -103,6 +144,15 @@ export const Chatbot = () => {
                   </div>
                 </div>
               ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-white text-slate-400 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm p-4 flex gap-1 items-center">
+                    <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:0ms]" />
+                    <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:150ms]" />
+                    <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:300ms]" />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Input de Mensaje */}
@@ -118,7 +168,8 @@ export const Chatbot = () => {
                 />
                 <button
                   onClick={handleSend}
-                  className="absolute right-2 p-2 text-[#0b63cd] hover:bg-blue-50 rounded-lg transition-colors"
+                  disabled={isLoading}
+                  className="absolute right-2 p-2 text-[#0b63cd] hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Send size={18} />
                 </button>
