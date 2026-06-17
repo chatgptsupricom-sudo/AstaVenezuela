@@ -5,6 +5,18 @@ import { Send, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
+// 🐼 Devuelve un sessionId persistente por navegador.
+// Se guarda en localStorage para que la conversación se recuerde
+// incluso si el usuario cierra y vuelve a abrir la página.
+const getSessionId = () => {
+  let id = localStorage.getItem("asta_session");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("asta_session", id);
+  }
+  return id;
+};
+
 export const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -37,12 +49,20 @@ export const Chatbot = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: userMsg.text }),
+          // 👇 Ahora mandamos el payload que n8n espera:
+          // action + sessionId (para la memoria) + chatInput (el mensaje)
+          body: JSON.stringify({
+            action: "sendMessage",
+            sessionId: getSessionId(),
+            chatInput: userMsg.text,
+          }),
         }
       );
       const data = await res.json();
+      // El Chat Trigger puede responder como objeto o como array; cubrimos ambos.
+      const payload = Array.isArray(data) ? data[0] : data;
       const reply =
-        data?.output ?? data?.text ?? data?.message ?? data?.response ??
+        payload?.output ?? payload?.text ?? payload?.message ?? payload?.response ??
         "No pude obtener una respuesta. Intenta de nuevo.";
       setMessages((prev) => [
         ...prev,
