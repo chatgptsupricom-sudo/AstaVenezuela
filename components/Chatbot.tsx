@@ -1,37 +1,60 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { RotateCcw, Send, X } from "lucide-react";
+import { Send, X, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-const INITIAL_MESSAGE = {
+// 🐼 Devuelve un sessionId persistente por navegador (para la memoria del bot).
+const getSessionId = () => {
+  let id = localStorage.getItem("asta_session");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("asta_session", id);
+  }
+  return id;
+};
+
+// Clave donde guardamos el historial visual de mensajes.
+const HISTORY_KEY = "asta_chat_history";
+
+const WELCOME_MESSAGE = {
   id: 1,
   text: "¡Hola! Soy el Panda. ¿En qué puedo ayudarte hoy?",
   sender: "bot",
 };
-const STORAGE_KEY = "asta_chat_history";
 
 export const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([INITIAL_MESSAGE]);
+  const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Cargar historial desde localStorage al montar
+  // 👇 Al montar, rehidratamos el historial guardado (si existe).
+  // Se hace en useEffect (no en useState) para evitar errores de hidratación
+  // de Next.js, porque localStorage no existe en el render del servidor.
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setMessages(JSON.parse(saved));
-    } catch {}
+      const saved = localStorage.getItem(HISTORY_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+        }
+      }
+    } catch {
+      // si algo falla, nos quedamos con el mensaje de bienvenida
+    }
   }, []);
 
-  // Guardar historial cada vez que cambian los mensajes
+  // 👇 Cada vez que cambian los mensajes, los guardamos.
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-    } catch {}
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(messages));
+    } catch {
+      // localStorage lleno o no disponible: lo ignoramos
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -39,6 +62,15 @@ export const Chatbot = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isOpen]);
+
+  // Reinicia la conversación: limpia pantalla, historial y memoria del bot.
+  const handleClear = () => {
+    setMessages([WELCOME_MESSAGE]);
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+      localStorage.removeItem("asta_session"); // 👈 nueva sesión = memoria fresca
+    } catch {}
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -53,12 +85,17 @@ export const Chatbot = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: userMsg.text }),
+          body: JSON.stringify({
+            action: "sendMessage",
+            sessionId: getSessionId(),
+            chatInput: userMsg.text,
+          }),
         }
       );
       const data = await res.json();
+      const payload = Array.isArray(data) ? data[0] : data;
       const reply =
-        data?.output ?? data?.text ?? data?.message ?? data?.response ??
+        payload?.output ?? payload?.text ?? payload?.message ?? payload?.response ??
         "No pude obtener una respuesta. Intenta de nuevo.";
       setMessages((prev) => [
         ...prev,
@@ -112,15 +149,13 @@ export const Chatbot = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                {/* Botón para reiniciar la conversación */}
                 <button
-                  onClick={() => {
-                    setMessages([INITIAL_MESSAGE]);
-                    localStorage.removeItem(STORAGE_KEY);
-                  }}
-                  title="Limpiar chat"
+                  onClick={handleClear}
+                  title="Reiniciar conversación"
                   className="p-2 hover:bg-white/10 rounded-full transition-colors"
                 >
-                  <RotateCcw size={16} />
+                  <Trash2 size={18} />
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
