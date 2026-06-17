@@ -3,6 +3,7 @@
 import { Navbar } from "@/components/Navbar";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link"; // Asegúrate de importar esto
 import { useEffect, useMemo, useState } from "react";
 
 // Definimos el tipo de producto
@@ -220,14 +221,12 @@ export default function CatalogPage() {
                           })}
                         </p> */}
 
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => setSelectedProduct(product)} // ABRE EL MODAL
-                          className="w-full px-4 py-2 bg-[#44abff] text-white rounded-lg font-bold hover:bg-[#0b63cd] transition-colors mt-auto"
+                        <Link
+                          href={`/producto/${product.id}`}
+                          className="w-full text-center px-4 py-2 bg-[#44abff] text-white rounded-lg font-bold hover:bg-[#0b63cd] transition-colors mt-auto block"
                         >
                           Ver Detalles
-                        </motion.button>
+                        </Link>
                       </div>
                     </motion.div>
                   ))}
