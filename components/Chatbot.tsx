@@ -30,10 +30,11 @@ export const Chatbot = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const hydrated = useRef(false);
 
-  // 👇 Al montar, rehidratamos el historial guardado (si existe).
-  // Se hace en useEffect (no en useState) para evitar errores de hidratación
-  // de Next.js, porque localStorage no existe en el render del servidor.
+  // Al montar, rehidratamos el historial guardado (si existe).
+  // Se hace en useEffect para evitar errores de hidratación de Next.js
+  // (localStorage no existe en el servidor).
   useEffect(() => {
     try {
       const saved = localStorage.getItem(HISTORY_KEY);
@@ -45,11 +46,16 @@ export const Chatbot = () => {
       }
     } catch {
       // si algo falla, nos quedamos con el mensaje de bienvenida
+    } finally {
+      hydrated.current = true;
     }
   }, []);
 
-  // 👇 Cada vez que cambian los mensajes, los guardamos.
+  // Cada vez que cambian los mensajes, los guardamos.
+  // Saltamos la primera ejecución (estado inicial) para no sobreescribir
+  // el historial guardado antes de que el efecto de carga lo restaure.
   useEffect(() => {
+    if (!hydrated.current) return;
     try {
       localStorage.setItem(HISTORY_KEY, JSON.stringify(messages));
     } catch {
