@@ -7,7 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 export default function ProductDetailPage() {
-  const { id } = useParams();
+  const { code } = useParams();
   const router = useRouter();
   const [product, setProduct] = useState<any>(null);
   const [allProducts, setAllProducts] = useState<any[]>([]);
@@ -17,9 +17,10 @@ export default function ProductDetailPage() {
       .then((res) => res.json())
       .then((data) => {
         setAllProducts(data);
-        setProduct(data.find((p: any) => p.id === id));
+        // CAMBIO AQUÍ: buscas por sku/referencia en lugar de id
+        setProduct(data.find((p: any) => p.code === code));
       });
-  }, [id]);
+  }, [code]); // El efecto se dispara cuando cambia el sku
 
   const similarProducts = useMemo(() => {
     if (!product) return [];
@@ -70,7 +71,7 @@ export default function ProductDetailPage() {
               <span className="text-[#0b63cd] font-bold text-xs uppercase tracking-[0.2em] mb-4">
                 {product.category}
               </span>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-black leading-[1.1] md:leading-[1.2] max-w-sm md:max-w-full break-words mb-6">
+              <h1 className=" lg:text-5xl font-black text-black   md:max-w-full break-words mb-6">
                 {product.name}
               </h1>
 

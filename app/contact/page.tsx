@@ -88,7 +88,7 @@ export default function ContactPage() {
                       Llámanos
                     </h4>
                     <p className="text-lg text-slate-600 font-semibold">
-                      XXXXXXXXXX
+                      +58 (422)-8002024
                     </p>
                   </div>
                 </div>

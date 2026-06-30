@@ -97,9 +97,7 @@ export default function CatalogPage() {
         {/* Header */}
         <section className="bg-gradient-to-r from-[#44abff] to-[#0b63cd] text-white py-12">
           <div className="container mx-auto px-6 max-w-7xl">
-            <h1 className="text-4xl lg:text-5xl font-black mb-4">
-              Catálogo Completo
-            </h1>
+            <h1 className="text-4xl lg:text-5xl font-black mb-4">Catálogo</h1>
             <p className="text-lg text-white/90">
               Explora nuestros {filteredProducts.length} productos disponibles
             </p>
@@ -222,7 +220,7 @@ export default function CatalogPage() {
                         </p> */}
 
                         <Link
-                          href={`/producto/${product.id}`}
+                          href={`/producto/${product.code}`}
                           className="w-full text-center px-4 py-2 bg-[#44abff] text-white rounded-lg font-bold hover:bg-[#0b63cd] transition-colors mt-auto block"
                         >
                           Ver Detalles
