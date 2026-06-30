@@ -1,11 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Send, Trash2, X } from "lucide-react";
+import { Send, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-// 🐼 Devuelve un sessionId persistente por navegador (para la memoria del bot).
+// 🐼 Devuelve un sessionId persistente por navegador.
+// Se guarda en localStorage para que la conversación se recuerde
+// incluso si el usuario cierra y vuelve a abrir la página.
 const getSessionId = () => {
   let id = localStorage.getItem("asta_session");
   if (!id) {
@@ -15,62 +17,167 @@ const getSessionId = () => {
   return id;
 };
 
-// Clave donde guardamos el historial visual de mensajes.
-const HISTORY_KEY = "asta_chat_history";
+// 🛒 Base de la página de cada producto. El SKU (code) se concatena al final.
+const PRODUCT_BASE_URL = "https://astavenezuela.com/producto/";
 
-const WELCOME_MESSAGE = {
-  id: 1,
-  text: "¡Hola! Soy el Panda. ¿En qué puedo ayudarte hoy?",
-  sender: "bot",
+// 🖼️ El endpoint de búsqueda no trae imagen, pero el listado completo sí
+// (campo "image": base64 "data:image/..." o "/placeholder.jpg").
+// Cargamos ese listado UNA sola vez y lo cacheamos a nivel de módulo,
+// para construir un mapa code -> imagen sin volver a pedirlo.
+const PRODUCTS_API_URL = "https://astavenezuela.com/api/productos";
+
+let imageCache: Record<string, string> | null = null;
+let imagePromise: Promise<Record<string, string>> | null = null;
+
+const fetchProductImages = (): Promise<Record<string, string>> => {
+  if (imageCache) return Promise.resolve(imageCache);
+  if (imagePromise) return imagePromise;
+
+  imagePromise = fetch(PRODUCTS_API_URL)
+    .then((r) => r.json())
+    .then((list: Array<{ code?: string; image?: string }>) => {
+      const map: Record<string, string> = {};
+      if (Array.isArray(list)) {
+        for (const p of list) {
+          if (p?.code && p?.image) map[p.code] = p.image;
+        }
+      }
+      imageCache = map;
+      return map;
+    })
+    .catch(() => {
+      imagePromise = null; // permite reintentar en el próximo mensaje
+      return {};
+    });
+
+  return imagePromise;
+};
+
+// Convierte el valor del campo image en un src usable, o null para usar fallback.
+const resolveImage = (img?: string): string | null => {
+  if (!img) return null;
+  if (img === "/placeholder.jpg") return null; // sin foto real -> fallback
+  if (img.startsWith("data:") || img.startsWith("http")) return img;
+  return `https://astavenezuela.com${img.startsWith("/") ? "" : "/"}${img}`;
+};
+
+// 🃏 Card individual de un producto.
+const ProductCard = ({
+  name,
+  desc,
+  code,
+  images,
+}: {
+  name: string;
+  desc?: string;
+  code: string;
+  images: Record<string, string>;
+}) => {
+  const src = resolveImage(images[code]);
+
+  return (
+    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2 shadow-sm">
+      <div className="flex gap-3">
+        <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-white border border-slate-200 flex items-center justify-center">
+          {src ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={src}
+              alt={name}
+              className="w-full h-full object-contain"
+              loading="lazy"
+            />
+          ) : (
+            <Image
+              src="/Chatbot.png"
+              alt={name}
+              width={48}
+              height={48}
+              className="object-contain opacity-50 p-1"
+            />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-slate-800 text-sm leading-tight">
+            {name}
+          </p>
+          {desc && (
+            <p className="text-xs text-slate-500 mt-1 leading-snug">{desc}</p>
+          )}
+        </div>
+      </div>
+      <a
+        href={`${PRODUCT_BASE_URL}${encodeURIComponent(code)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="self-start text-xs font-bold text-white bg-[#0b63cd] hover:bg-[#0950a8] px-3 py-1.5 rounded-lg transition-colors"
+      >
+        Ver más
+      </a>
+    </div>
+  );
+};
+
+// 🐼 Renderiza el texto del bot. Las líneas con el marcador [[PRODUCTO]]
+// se convierten en cards (nombre, descripción, imagen y botón "Ver más").
+// El resto del texto se muestra como párrafos normales.
+const renderBotMessage = (text: string, images: Record<string, string>) => {
+  const lines = text.split("\n");
+
+  return (
+    <div className="space-y-2">
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+
+        if (trimmed.startsWith("[[PRODUCTO]]")) {
+          const body = trimmed.replace("[[PRODUCTO]]", "").trim();
+          const [name, desc, code] = body.split("|").map((s) => s.trim());
+
+          if (name && code) {
+            return (
+              <ProductCard
+                key={i}
+                name={name}
+                desc={desc}
+                code={code}
+                images={images}
+              />
+            );
+          }
+        }
+
+        if (!trimmed) return null;
+        return (
+          <p key={i} className="whitespace-pre-wrap">
+            {line}
+          </p>
+        );
+      })}
+    </div>
+  );
 };
 
 export const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([WELCOME_MESSAGE]);
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      text: "¡Hola! Soy el Panda. ¿En qué puedo ayudarte hoy?",
+      sender: "bot",
+    },
+  ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [productImages, setProductImages] = useState<Record<string, string>>(
+    {},
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  // 👇 Al montar, rehidratamos el historial guardado (si existe).
-  // Se hace en useEffect (no en useState) para evitar errores de hidratación
-  // de Next.js, porque localStorage no existe en el render del servidor.
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(HISTORY_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setMessages(parsed);
-        }
-      }
-    } catch {
-      // si algo falla, nos quedamos con el mensaje de bienvenida
-    }
-  }, []);
-
-  // 👇 Cada vez que cambian los mensajes, los guardamos.
-  useEffect(() => {
-    try {
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(messages));
-    } catch {
-      // localStorage lleno o no disponible: lo ignoramos
-    }
-  }, [messages]);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isOpen]);
-
-  // Reinicia la conversación: limpia pantalla, historial y memoria del bot.
-  const handleClear = () => {
-    setMessages([WELCOME_MESSAGE]);
-    try {
-      localStorage.removeItem(HISTORY_KEY);
-      localStorage.removeItem("asta_session"); // 👈 nueva sesión = memoria fresca
-    } catch {}
-  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -85,6 +192,8 @@ export const Chatbot = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          // 👇 Ahora mandamos el payload que n8n espera:
+          // action + sessionId (para la memoria) + chatInput (el mensaje)
           body: JSON.stringify({
             action: "sendMessage",
             sessionId: getSessionId(),
@@ -93,6 +202,7 @@ export const Chatbot = () => {
         },
       );
       const data = await res.json();
+      // El Chat Trigger puede responder como objeto o como array; cubrimos ambos.
       const payload = Array.isArray(data) ? data[0] : data;
       const reply =
         payload?.output ??
@@ -100,6 +210,12 @@ export const Chatbot = () => {
         payload?.message ??
         payload?.response ??
         "No pude obtener una respuesta. Intenta de nuevo.";
+
+      // Si la respuesta trae productos, aseguramos cargar el mapa de imágenes.
+      if (typeof reply === "string" && reply.includes("[[PRODUCTO]]")) {
+        fetchProductImages().then(setProductImages);
+      }
+
       setMessages((prev) => [
         ...prev,
         { id: Date.now() + 1, text: reply, sender: "bot" },
@@ -151,22 +267,12 @@ export const Chatbot = () => {
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                {/* Botón para reiniciar la conversación */}
-                <button
-                  onClick={handleClear}
-                  title="Reiniciar conversación"
-                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <Trash2 size={18} />
-                </button>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
             </div>
 
             {/* Cuerpo de Mensajes */}
@@ -180,13 +286,15 @@ export const Chatbot = () => {
                   className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[80%] p-4 rounded-2xl text-sm font-medium ${
+                    className={`max-w-[85%] p-4 rounded-2xl text-sm font-medium ${
                       msg.sender === "user"
                         ? "bg-[#0b63cd] text-white rounded-tr-none shadow-lg shadow-blue-900/10"
                         : "bg-white text-slate-700 rounded-tl-none border border-slate-100 shadow-sm"
                     }`}
                   >
-                    {msg.text}
+                    {msg.sender === "bot"
+                      ? renderBotMessage(msg.text, productImages)
+                      : msg.text}
                   </div>
                 </div>
               ))}
