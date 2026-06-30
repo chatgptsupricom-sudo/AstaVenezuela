@@ -1,13 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Send, X } from "lucide-react";
+import { Send, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-// 🐼 Devuelve un sessionId persistente por navegador.
-// Se guarda en localStorage para que la conversación se recuerde
-// incluso si el usuario cierra y vuelve a abrir la página.
+// 🐼 Devuelve un sessionId persistente por navegador (para la memoria del bot).
 const getSessionId = () => {
   let id = localStorage.getItem("asta_session");
   if (!id) {
@@ -17,24 +15,62 @@ const getSessionId = () => {
   return id;
 };
 
+// Clave donde guardamos el historial visual de mensajes.
+const HISTORY_KEY = "asta_chat_history";
+
+const WELCOME_MESSAGE = {
+  id: 1,
+  text: "¡Hola! Soy el Panda. ¿En qué puedo ayudarte hoy?",
+  sender: "bot",
+};
+
 export const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: "¡Hola! Soy el Panda. ¿En qué puedo ayudarte hoy?",
-      sender: "bot",
-    },
-  ]);
+  const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 👇 Al montar, rehidratamos el historial guardado (si existe).
+  // Se hace en useEffect (no en useState) para evitar errores de hidratación
+  // de Next.js, porque localStorage no existe en el render del servidor.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(HISTORY_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+        }
+      }
+    } catch {
+      // si algo falla, nos quedamos con el mensaje de bienvenida
+    }
+  }, []);
+
+  // 👇 Cada vez que cambian los mensajes, los guardamos.
+  useEffect(() => {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(messages));
+    } catch {
+      // localStorage lleno o no disponible: lo ignoramos
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isOpen]);
+
+  // Reinicia la conversación: limpia pantalla, historial y memoria del bot.
+  const handleClear = () => {
+    setMessages([WELCOME_MESSAGE]);
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+      localStorage.removeItem("asta_session"); // 👈 nueva sesión = memoria fresca
+    } catch {}
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -49,8 +85,6 @@ export const Chatbot = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          // 👇 Ahora mandamos el payload que n8n espera:
-          // action + sessionId (para la memoria) + chatInput (el mensaje)
           body: JSON.stringify({
             action: "sendMessage",
             sessionId: getSessionId(),
@@ -59,7 +93,6 @@ export const Chatbot = () => {
         },
       );
       const data = await res.json();
-      // El Chat Trigger puede responder como objeto o como array; cubrimos ambos.
       const payload = Array.isArray(data) ? data[0] : data;
       const reply =
         payload?.output ??
@@ -118,12 +151,22 @@ export const Chatbot = () => {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-1">
+                {/* Botón para reiniciar la conversación */}
+                <button
+                  onClick={handleClear}
+                  title="Reiniciar conversación"
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <Trash2 size={18} />
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             {/* Cuerpo de Mensajes */}

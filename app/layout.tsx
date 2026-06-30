@@ -1,9 +1,9 @@
+import { Chatbot } from "@/components/Chatbot";
+import { PageLoader } from "@/components/Loader";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-// 1. Importamos el componente (Asegúrate de que la ruta sea correcta)
-import { PageLoader } from "@/components/Loader";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -55,7 +55,7 @@ export default function RootLayout({
       <body className="font-sans antialiased bg-[#f3f5f4] text-slate-900 selection:bg-blue-100 selection:text-blue-900">
         {/* 2. Añadimos el Loader aquí para que cubra toda la página al cargar */}
         <PageLoader />
-
+        <Chatbot />
         <div className="flex flex-col min-h-screen">{children}</div>
 
         {process.env.NODE_ENV === "production" && <Analytics />}
