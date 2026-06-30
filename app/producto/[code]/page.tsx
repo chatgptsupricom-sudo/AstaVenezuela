@@ -1,15 +1,71 @@
 import { Metadata } from "next";
+import xmlrpc from "xmlrpc";
 import ProductDetailPageClient from "./ProductDetailPageClient";
 
 const SITE_URL = "https://astavenezuela.com";
 
-// 🟢 MODIFICACIÓN: Tipamos params como una Promesa para cumplir con el estándar actual de Next.js
+// 1. FUNCIÓN INTERNA: Conecta directamente a Odoo en el servidor sin pasar por el fetch
+async function getOdooProductData(code: string): Promise<any> {
+  const odooConfig = {
+    url: process.env.NEXT_PUBLIC_ODOO_URL || "",
+    db: process.env.ODOO_DB || "",
+    username: process.env.ODOO_USERNAME || "",
+    password: process.env.ODOO_API_KEY || "",
+  };
+
+  const host = odooConfig.url ? new URL(odooConfig.url).hostname : "";
+  const commonClient = xmlrpc.createSecureClient({
+    host,
+    port: 443,
+    path: "/xmlrpc/2/common",
+  });
+  const modelsClient = xmlrpc.createSecureClient({
+    host,
+    port: 443,
+    path: "/xmlrpc/2/object",
+  });
+
+  return new Promise((resolve) => {
+    commonClient.methodCall(
+      "authenticate",
+      [odooConfig.db, odooConfig.username, odooConfig.password, {}],
+      (error, uid) => {
+        if (error || !uid) return resolve(null);
+
+        // Buscamos el producto en Odoo usando su SKU/Código
+        const searchDomain = [
+          ["spiff_brand_id", "in", [951, 925]],
+          ["sale_ok", "=", true],
+          ["default_code", "=", code],
+        ];
+
+        modelsClient.methodCall(
+          "execute_kw",
+          [
+            odooConfig.db,
+            uid,
+            odooConfig.password,
+            "product.template",
+            "search_read",
+            [searchDomain],
+            { fields: ["id", "name", "description_sale"], limit: 1 },
+          ],
+          (err, products) => {
+            if (err || !products || products.length === 0) return resolve(null);
+            resolve(products[0]); // Retorna el registro puro de Odoo
+          },
+        );
+      },
+    );
+  });
+}
+
+// 2. GENERACIÓN DE METADATA (Next.js 15+ compatible con params asíncronos)
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ code: string }>;
 }): Promise<Metadata> {
-  // 🟢 ESPERAMOS a que los parámetros se resuelvan en el servidor
   const resolvedParams = await params;
   const code = resolvedParams.code;
 
@@ -19,24 +75,18 @@ export async function generateMetadata({
   let odooImageUrl = `${SITE_URL}/placeholder.jpg`;
 
   try {
-    const res = await fetch(`${SITE_URL}/api/productos`, {
-      cache: "no-store",
-    });
+    // Llamamos directo a la función nativa de Odoo
+    const product = await getOdooProductData(code);
 
-    if (res.ok) {
-      const data = await res.json();
-      const product = data.find((p: any) => p.code === code);
+    if (product && product.id) {
+      title = `${product.name} | ASTA Venezuela`;
+      description = product.description_sale || description;
 
-      if (product && product.id_odoo) {
-        title = `${product.name} | ASTA Venezuela`;
-        description = product.description || description;
-
-        // 📷 Ahora sí armará la URL real usando el id_odoo numérico que expusimos en la API
-        odooImageUrl = `https://supricom2.odoo.com/web/image/product.template/${product.id_odoo}/image_1024`;
-      }
+      // 📷 Al usar el ID numérico directo de Odoo, la URL se arma perfectamente sin fallas de API
+      odooImageUrl = `https://supricom2.odoo.com/web/image/product.template/${product.id}/image_1024`;
     }
   } catch (error) {
-    console.error("Error en generateMetadata:", error);
+    console.error("Error en generateMetadata consultando Odoo:", error);
   }
 
   return {
