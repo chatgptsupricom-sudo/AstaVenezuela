@@ -99,7 +99,7 @@ export default function ProductDetailPage() {
                     key={p.id}
                     whileHover={{ y: -5 }}
                     className="group cursor-pointer border border-gray-100 rounded-2xl p-4 transition-all hover:shadow-lg"
-                    onClick={() => router.push(`/producto/${p.id}`)}
+                    onClick={() => router.push(`/producto/${p.code}`)}
                   >
                     <div className="relative aspect-square mb-4">
                       <Image
