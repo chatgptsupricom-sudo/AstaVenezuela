@@ -31,7 +31,7 @@ export default function ProductDetailPageClient() {
   const handleWhatsAppClick = () => {
     if (!product) return;
 
-    const phoneNumber = "584144715626";
+    const phoneNumber = "584228008204";
     const currentUrl =
       typeof window !== "undefined" ? window.location.href : "";
 
