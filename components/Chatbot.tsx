@@ -17,7 +17,7 @@ const getSessionId = () => {
   return id;
 };
 
-// 🛒 Base de la página de cada producto. El SKU (code) se concatena al final.
+// 🛒 Base de la página de cada producto. El SKU (code) se concatena al final
 const PRODUCT_BASE_URL = "https://astavenezuela.com/producto/";
 
 // 💬 Persistencia del chat en el navegador (sobrevive al recargar la página).
