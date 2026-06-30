@@ -31,12 +31,12 @@ export async function generateMetadata({
       // Buscamos el producto por su código dentro de lo que devuelve tu API
       const product = data.find((p: any) => p.code === code);
 
-      if (product && product.id) {
+      if (product && product.id_odoo) {
         title = `${product.name} | ASTA Venezuela`;
         description = product.description || description;
 
-        // 📷 Usamos el .id que ya extrae tu API para armar la URL pública que WhatsApp sí lee
-        odooImageUrl = `https://supricom2.odoo.com/web/image/product.template/${product.id}/image_1024`;
+        // 📷 Estructura la URL con el id numérico real e inalterado
+        odooImageUrl = `https://supricom2.odoo.com/web/image/product.template/${product.id_odoo}/image_1024`;
       }
     }
   } catch (error) {
