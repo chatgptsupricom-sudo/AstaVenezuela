@@ -36,6 +36,7 @@ export async function GET() {
         const searchDomain = [
           ["spiff_brand_id", "in", [951, 925]],
           ["sale_ok", "=", true],
+          ["categ_id", "=", 2614], // 🟢 Usamos el ID exacto que obtuvimos de la URL
         ];
 
         // 🔴 CAMBIO: Usamos 'image_1920', el campo correcto para plantillas

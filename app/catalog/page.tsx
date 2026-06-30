@@ -38,6 +38,7 @@ export default function CatalogPage() {
         if (!res.ok) throw new Error("Error al obtener los datos");
 
         const data = await res.json();
+        console.log("PRODUCTOS DE LA API:", data); // 👁️ Revisa esto en la consola del navegador (F12)
         setAllProducts(data);
       } catch (err) {
         console.error(err);
@@ -46,7 +47,6 @@ export default function CatalogPage() {
         setIsLoading(false);
       }
     }
-
     fetchProducts();
   }, []);
 
@@ -133,7 +133,7 @@ export default function CatalogPage() {
                       <motion.button
                         key={`category-${cat}-${idx}`}
                         whileHover={{ x: 5 }}
-                        onClick={() => setSelectedCategory(cat)}
+                        onClick={() => setSelectedCategory(cat)} // Asegura que si hace clic en "Todas" se guarde "Todas"
                         className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                           selectedCategory === cat
                             ? "bg-[#44abff] text-white font-bold"
