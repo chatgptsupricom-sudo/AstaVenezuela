@@ -11,6 +11,7 @@ export default function ProductDetailPageClient() {
   const router = useRouter();
   const [product, setProduct] = useState<any>(null);
   const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetch("/api/productos")
@@ -28,13 +29,12 @@ export default function ProductDetailPageClient() {
       .slice(0, 5);
   }, [allProducts, product]);
 
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
+
   const handleWhatsAppClick = () => {
     if (!product) return;
 
     const phoneNumber = "584228008204";
-    const currentUrl =
-      typeof window !== "undefined" ? window.location.href : "";
-
     const message = `Hola, quiero más información sobre este producto:\n\n*Producto:* ${product.name}\n*Código:* ${product.code}\n\nLink del producto: ${currentUrl}`;
     const encodedMessage = encodeURIComponent(message);
 
@@ -42,6 +42,38 @@ export default function ProductDetailPageClient() {
       `https://wa.me/${phoneNumber}?text=${encodedMessage}`,
       "_blank",
     );
+  };
+
+  const handleShareClick = async () => {
+    if (!product) return;
+
+    const shareData = {
+      title: product.name,
+      text: `Mira este producto: ${product.name}`,
+      url: currentUrl,
+    };
+
+    // Intenta usar la API nativa de compartir de celulares/navegadores modernos
+    if (
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare(shareData)
+    ) {
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        console.log("Error compartiendo:", error);
+      }
+    } else {
+      // Fallback: Copiar enlace al portapapeles en desktop si no está disponible la API Share
+      try {
+        await navigator.clipboard.writeText(currentUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error("No se pudo copiar el enlace", err);
+      }
+    }
   };
 
   if (!product)
@@ -100,23 +132,49 @@ export default function ProductDetailPageClient() {
                 {product.description}
               </p>
 
-              {/* 🟢 BOTÓN DE CONSULTAR CON ICONO OFICIAL DE WHATSAPP */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleWhatsAppClick}
-                className="w-full md:w-fit px-8 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-black text-xl rounded-2xl transition-colors flex items-center justify-center gap-3 shadow-lg shadow-green-100 tracking-wide"
-              >
-                {/* Icono oficial exacto extraído de la marca de WhatsApp */}
-                <svg
-                  className="w-7 h-7 fill-white"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
+              {/* Contenedor de Botones de acción */}
+              <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-fit">
+                {/* 🟢 BOTÓN DE CONSULTAR */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleWhatsAppClick}
+                  className="w-full sm:w-fit px-6 py-3.5 bg-[#25D366] hover:bg-[#20ba5a] text-white font-black rounded-2xl transition-colors flex items-center justify-center gap-3 shadow-lg shadow-green-100 tracking-wide text-sm md:text-base whitespace-nowrap"
                 >
-                  <path d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.764.46 3.42 1.268 4.876L2 22l5.304-1.392A9.96 9.96 0 0 0 12.004 22c5.52 0 10-4.48 10-10c0-5.52-4.48-10-10-10zm0 1.716c4.572 0 8.288 3.716 8.288 8.288c0 4.572-3.716 8.284-8.288 8.284c-1.688 0-3.256-.508-4.572-1.376l-.328-.196l-3.148.824l.84-3.064l-.216-.344a8.232 8.232 0 0 1-1.164-4.128c0-4.572 3.716-8.288 8.288-8.288zm-3.46 4.312a.668.668 0 0 0-.484.228c-.168.196-.644.628-.644 1.532c0 .904.66 1.78.752 1.904c.092.124 1.272 2.052 3.12 2.784c1.54.608 1.852.488 2.192.456c.34-.032 1.096-.448 1.252-.88c.156-.432.156-.804.108-.884c-.048-.08-.196-.124-.412-.232c-.216-.108-1.284-.632-1.484-.704c-.196-.072-.34-.108-.484.108c-.144.216-.556.704-.68 1.152c-.124.448-.248.492-.464.384c-.216-.108-.912-.336-1.74-1.072c-.644-.576-1.08-1.288-1.208-1.504c-.124-.216-.012-.332.096-.44c.096-.096.216-.252.324-.376c.108-.124.144-.216.216-.36c.072-.144.036-.272-.016-.38c-.056-.108-.484-1.168-.664-1.604c-.176-.424-.352-.364-.484-.372z" />
-                </svg>
-                CONSULTAR
-              </motion.button>
+                  <Image
+                    src="/whatsapp-wh.png"
+                    alt="WhatsApp Logo"
+                    width={22}
+                    height={22}
+                    className="object-contain"
+                  />
+                  CONSULTAR
+                </motion.button>
+
+                {/* 🔵 BOTÓN DE COMPARTIR */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleShareClick}
+                  className="w-full sm:w-fit px-6 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold rounded-2xl transition-colors flex items-center justify-center gap-3 tracking-wide text-sm md:text-base whitespace-nowrap"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className="w-5 h-5 text-gray-700"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
+                    />
+                  </svg>
+                  {copied ? "¡ENLACE COPIADO!" : "COMPARTIR"}
+                </motion.button>
+              </div>
             </div>
           </div>
 

@@ -98,20 +98,20 @@ export function Navbar() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="md:hidden bg-white/95 backdrop-blur-lg border-t border-slate-100 absolute w-full shadow-xl"
+          className="md:hidden bg-white backdrop-blur-lg border-t border-slate-100 absolute w-full shadow-xl"
         >
           <div className="flex flex-col gap-6 p-8">
             {navItems.map((item, idx) => (
               <a
                 key={idx}
                 href={item.href}
-                className="text-slate-900 font-black text-2xl tracking-tighter"
+                className="text-center text-slate-600 font-black  text-2xl "
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item.label}
               </a>
             ))}
-            <button className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-lg shadow-lg shadow-blue-600/20">
+            <button className="w-full py-4 bg-blue-600 text-white rounded-2xl  text-lg shadow-lg shadow-blue-600/20">
               Contactar ahora
             </button>
           </div>
