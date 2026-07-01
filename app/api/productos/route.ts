@@ -175,7 +175,7 @@ export async function GET() {
               // 🔴 Si p.image_1920 es false o null, enviamos el placeholder
               image: p.image_1920
                 ? `data:image/jpeg;base64,${p.image_1920}`
-                : "/placeholder.jpg",
+                : "/ASTA LOGO.png",
               code: p.default_code || "",
               description: p.description_sale || "Sin descripción.",
             }));

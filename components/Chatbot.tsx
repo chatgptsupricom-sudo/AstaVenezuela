@@ -99,7 +99,7 @@ const ProductCard = ({
             />
           ) : (
             <Image
-              src="/Chatbot.png"
+              src="/Chatbot2.jpeg"
               alt={name}
               width={48}
               height={48}
@@ -300,7 +300,7 @@ export const Chatbot = () => {
               <div className="flex items-center gap-3">
                 <div className="relative w-15 h-15 bg-white rounded-full overflow-hidden border-2 border-white/20">
                   <Image
-                    src="/Chatbot.png"
+                    src="/Chatbot2.jpeg"
                     alt="ASTA Bot"
                     fill
                     className="object-cover"
@@ -405,7 +405,7 @@ export const Chatbot = () => {
         className="relative w-30 h-30 bg-white rounded-full shadow-[0_15px_40px_rgba(11,99,205,0.4)] flex items-center justify-center overflow-hidden border-4 border-blue-50 group transition-all"
       >
         <Image
-          src="/Chatbot.png"
+          src="/Chatbot2.jpeg"
           alt="Abrir Chat"
           fill
           // Eliminamos group-hover:scale-110 aquí
