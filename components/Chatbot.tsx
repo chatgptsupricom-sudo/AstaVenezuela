@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Send, X } from "lucide-react";
+import { Send, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
@@ -17,8 +17,18 @@ const getSessionId = () => {
   return id;
 };
 
-// 🛒 Base de la página de cada producto. El SKU (code) se concatena al final.
+// 🛒 Base de la página de cada producto. El SKU (code) se concatena al final
 const PRODUCT_BASE_URL = "https://astavenezuela.com/producto/";
+
+// 💬 Persistencia del chat en el navegador (sobrevive al recargar la página).
+const CHAT_STORAGE_KEY = "asta_messages";
+const DEFAULT_MESSAGES = [
+  {
+    id: 1,
+    text: "¡Hola! Soy el Panda. ¿En qué puedo ayudarte hoy?",
+    sender: "bot",
+  },
+];
 
 // 🖼️ El endpoint de búsqueda no trae imagen, pero el listado completo sí
 // (campo "image": base64 "data:image/..." o "/placeholder.jpg").
@@ -159,13 +169,7 @@ const renderBotMessage = (text: string, images: Record<string, string>) => {
 
 export const Chatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: "¡Hola! Soy el Panda. ¿En qué puedo ayudarte hoy?",
-      sender: "bot",
-    },
-  ]);
+  const [messages, setMessages] = useState(DEFAULT_MESSAGES);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [productImages, setProductImages] = useState<Record<string, string>>(
@@ -178,6 +182,51 @@ export const Chatbot = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isOpen]);
+
+  // Carga el historial guardado al montar (para que sobreviva al recargar).
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+          // Si el historial tiene productos, recargamos sus imágenes.
+          if (
+            parsed.some(
+              (m) =>
+                typeof m.text === "string" && m.text.includes("[[PRODUCTO]]"),
+            )
+          ) {
+            fetchProductImages().then(setProductImages);
+          }
+        }
+      }
+    } catch {
+      // Si algo falla, se queda con el saludo por defecto.
+    }
+  }, []);
+
+  // Guarda el historial cada vez que cambian los mensajes.
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+    } catch {
+      // Ignoramos errores de cuota/almacenamiento.
+    }
+  }, [messages]);
+
+  // Limpia el chat: vuelve al saludo y arranca una conversación nueva.
+  const handleClear = () => {
+    setMessages(DEFAULT_MESSAGES);
+    try {
+      localStorage.removeItem(CHAT_STORAGE_KEY);
+      // Reiniciamos la sesión para que la memoria del bot también empiece de cero.
+      localStorage.removeItem("asta_session");
+    } catch {
+      // Ignoramos errores de almacenamiento.
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -267,12 +316,23 @@ export const Chatbot = () => {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleClear}
+                  title="Limpiar chat"
+                  aria-label="Limpiar chat"
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <Trash2 size={18} />
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  aria-label="Cerrar chat"
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             {/* Cuerpo de Mensajes */}
