@@ -124,7 +124,7 @@ export default function ProductDetailPageClient() {
                   EN STOCK
                 </span>
                 <span className="text-gray-400 font-mono text-sm">
-                  Código: {product.code}
+                  SKU: {product.code}
                 </span>
               </div>
 

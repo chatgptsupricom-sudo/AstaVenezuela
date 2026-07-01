@@ -6,8 +6,6 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 // 🐼 Devuelve un sessionId persistente por navegador.
-// Se guarda en localStorage para que la conversación se recuerde
-// incluso si el usuario cierra y vuelve a abrir la página.
 const getSessionId = () => {
   let id = localStorage.getItem("asta_session");
   if (!id) {
@@ -17,10 +15,7 @@ const getSessionId = () => {
   return id;
 };
 
-// 🛒 Base de la página de cada producto. El SKU (code) se concatena al final
 const PRODUCT_BASE_URL = "https://astavenezuela.com/producto/";
-
-// 💬 Persistencia del chat en el navegador (sobrevive al recargar la página).
 const CHAT_STORAGE_KEY = "asta_messages";
 const DEFAULT_MESSAGES = [
   {
@@ -30,12 +25,7 @@ const DEFAULT_MESSAGES = [
   },
 ];
 
-// 🖼️ El endpoint de búsqueda no trae imagen, pero el listado completo sí
-// (campo "image": base64 "data:image/..." o "/placeholder.jpg").
-// Cargamos ese listado UNA sola vez y lo cacheamos a nivel de módulo,
-// para construir un mapa code -> imagen sin volver a pedirlo.
 const PRODUCTS_API_URL = "https://astavenezuela.com/api/productos";
-
 let imageCache: Record<string, string> | null = null;
 let imagePromise: Promise<Record<string, string>> | null = null;
 
@@ -56,22 +46,20 @@ const fetchProductImages = (): Promise<Record<string, string>> => {
       return map;
     })
     .catch(() => {
-      imagePromise = null; // permite reintentar en el próximo mensaje
+      imagePromise = null;
       return {};
     });
 
   return imagePromise;
 };
 
-// Convierte el valor del campo image en un src usable, o null para usar fallback.
 const resolveImage = (img?: string): string | null => {
   if (!img) return null;
-  if (img === "/placeholder.jpg") return null; // sin foto real -> fallback
+  if (img === "/placeholder.jpg") return null;
   if (img.startsWith("data:") || img.startsWith("http")) return img;
   return `https://astavenezuela.com${img.startsWith("/") ? "" : "/"}${img}`;
 };
 
-// 🃏 Card individual de un producto.
 const ProductCard = ({
   name,
   desc,
@@ -128,9 +116,6 @@ const ProductCard = ({
   );
 };
 
-// 🐼 Renderiza el texto del bot. Las líneas con el marcador [[PRODUCTO]]
-// se convierten en cards (nombre, descripción, imagen y botón "Ver más").
-// El resto del texto se muestra como párrafos normales.
 const renderBotMessage = (text: string, images: Record<string, string>) => {
   const lines = text.split("\n");
 
@@ -183,7 +168,6 @@ export const Chatbot = () => {
     }
   }, [messages, isOpen]);
 
-  // Carga el historial guardado al montar (para que sobreviva al recargar).
   useEffect(() => {
     try {
       const saved = localStorage.getItem(CHAT_STORAGE_KEY);
@@ -191,7 +175,6 @@ export const Chatbot = () => {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setMessages(parsed);
-          // Si el historial tiene productos, recargamos sus imágenes.
           if (
             parsed.some(
               (m) =>
@@ -202,30 +185,21 @@ export const Chatbot = () => {
           }
         }
       }
-    } catch {
-      // Si algo falla, se queda con el saludo por defecto.
-    }
+    } catch {}
   }, []);
 
-  // Guarda el historial cada vez que cambian los mensajes.
   useEffect(() => {
     try {
       localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
-    } catch {
-      // Ignoramos errores de cuota/almacenamiento.
-    }
+    } catch {}
   }, [messages]);
 
-  // Limpia el chat: vuelve al saludo y arranca una conversación nueva.
   const handleClear = () => {
     setMessages(DEFAULT_MESSAGES);
     try {
       localStorage.removeItem(CHAT_STORAGE_KEY);
-      // Reiniciamos la sesión para que la memoria del bot también empiece de cero.
       localStorage.removeItem("asta_session");
-    } catch {
-      // Ignoramos errores de almacenamiento.
-    }
+    } catch {}
   };
 
   const handleSend = async () => {
@@ -241,8 +215,6 @@ export const Chatbot = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          // 👇 Ahora mandamos el payload que n8n espera:
-          // action + sessionId (para la memoria) + chatInput (el mensaje)
           body: JSON.stringify({
             action: "sendMessage",
             sessionId: getSessionId(),
@@ -251,7 +223,6 @@ export const Chatbot = () => {
         },
       );
       const data = await res.json();
-      // El Chat Trigger puede responder como objeto o como array; cubrimos ambos.
       const payload = Array.isArray(data) ? data[0] : data;
       const reply =
         payload?.output ??
@@ -260,7 +231,6 @@ export const Chatbot = () => {
         payload?.response ??
         "No pude obtener una respuesta. Intenta de nuevo.";
 
-      // Si la respuesta trae productos, aseguramos cargar el mapa de imágenes.
       if (typeof reply === "string" && reply.includes("[[PRODUCTO]]")) {
         fetchProductImages().then(setProductImages);
       }
@@ -284,21 +254,33 @@ export const Chatbot = () => {
   };
 
   return (
-    // Ajustamos el contenedor a "items-end" para que todo se alinee a la derecha
-    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end">
+    /* Cambio 1: El contenedor fixed ahora se adapta.
+      En móvil se pega por completo a los bordes (bottom-0 right-0 w-full h-full si está abierto).
+      En desktop conserva su comportamiento clásico en la esquina.
+    */
+    <div
+      className={`fixed z-[100] flex flex-col items-end transition-all duration-300 ${
+        isOpen
+          ? "bottom-0 right-0 w-full h-full sm:bottom-6 sm:right-6 sm:w-auto sm:h-auto"
+          : "bottom-6 right-6"
+      }`}
+    >
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            // mb-6 para dar espacio entre la ventana y el botón grande
-            className="mb-6 w-[350px] sm:w-[450px] h-[600px] bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(11,99,205,0.2)] border border-slate-100 overflow-hidden flex flex-col"
+            /* Cambio 2: Clases de tamaño y bordes adaptables.
+              w-full h-full rounded-none (en móviles para cubrirlo todo).
+              sm:w-[450px] sm:h-[600px] sm:rounded-[2.5rem] sm:mb-6 (en pantallas grandes).
+            */
+            className="w-full h-full sm:w-[450px] sm:h-[600px] bg-white rounded-none sm:rounded-[2.5rem] shadow-[0_20px_50px_rgba(11,99,205,0.2)] border border-slate-100 overflow-hidden flex flex-col sm:mb-6"
           >
             {/* Header del Chat */}
-            <div className="p-6 bg-gradient-to-r from-[#000000] to-[#0b63cd] text-white flex items-center justify-between">
+            <div className="p-6 bg-gradient-to-r from-[#000000] to-[#0b63cd] text-white flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="relative w-15 h-15 bg-white rounded-full overflow-hidden border-2 border-white/20">
+                <div className="relative w-12 h-12 bg-white rounded-full overflow-hidden border-2 border-white/20">
                   <Image
                     src="/Chatbot2.jpeg"
                     alt="ASTA Bot"
@@ -310,7 +292,7 @@ export const Chatbot = () => {
                   <h3 className="font-black text-sm uppercase tracking-wider leading-none">
                     Pandita
                   </h3>
-                  <span className="text-[10px] opacity-80 flex items-center gap-1">
+                  <span className="text-[10px] opacity-80 flex items-center gap-1 mt-1">
                     <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
                     En línea
                   </span>
@@ -370,7 +352,7 @@ export const Chatbot = () => {
             </div>
 
             {/* Input de Mensaje */}
-            <div className="p-4 bg-white border-t border-slate-100">
+            <div className="p-4 bg-white border-t border-slate-100 flex-shrink-0">
               <div className="relative flex items-center">
                 <input
                   type="text"
@@ -396,23 +378,24 @@ export const Chatbot = () => {
         )}
       </AnimatePresence>
 
-      {/* Botón Disparador - AUMENTADO de w-16 h-16 a w-24 h-24 */}
-      {/* Botón Disparador - Estático y Profesional */}
+      {/* Botón Disparador:
+        Se oculta en móvil (`hidden sm:flex`) si el chat está abierto,
+        evitando superposiciones extrañas debajo del chat completo.
+      */}
       <motion.button
-        // Eliminamos el whileHover de escala para que no haga zoom
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="relative w-30 h-30 bg-white rounded-full shadow-[0_15px_40px_rgba(11,99,205,0.4)] flex items-center justify-center overflow-hidden border-4 border-blue-50 group transition-all"
+        className={`relative w-24 h-24 bg-white rounded-full shadow-[0_15px_40px_rgba(11,99,205,0.4)] items-center justify-center overflow-hidden border-4 border-blue-50 group transition-all ${
+          isOpen ? "hidden sm:flex" : "flex"
+        }`}
       >
         <Image
           src="/Chatbot2.jpeg"
           alt="Abrir Chat"
           fill
-          // Eliminamos group-hover:scale-110 aquí
           className="object-cover p-1 transition-transform duration-300"
           priority
         />
-        {/* Un sutil overlay de color al pasar el mouse en lugar de zoom */}
         <div className="absolute inset-0 bg-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
       </motion.button>
     </div>

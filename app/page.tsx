@@ -1,6 +1,6 @@
 "use client";
 
-import { Chatbot } from "@/components/Chatbot"; // Importa el nuevo componente
+import { Chatbot } from "@/components/Chatbot";
 import { Navbar } from "@/components/Navbar";
 import {
   Accordion,
@@ -8,12 +8,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { BRANDS, FEATURED_PRODUCTS } from "@/lib/products";
+import { BRANDS } from "@/lib/products";
 import { motion } from "framer-motion";
 import { FileText, Search, ShieldCheck, ShoppingCart } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const MascotScene = dynamic(
   () =>
@@ -45,15 +45,37 @@ const itemVariants = {
   },
 };
 
+// 🖼️ Define aquí la ruta de tu imagen por defecto dentro de la carpeta /public
+const PRODUCT_PLACEHOLDER = "/Chatbot2.jpeg";
+
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState("Tóneres HP");
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    async function loadFeaturedProducts() {
+      try {
+        const res = await fetch("/api/productos/rapidito");
+        if (!res.ok) throw new Error("Failed to fetch products");
+        const data = await res.json();
+
+        // Tomamos los primeros 4 para la cuadrícula de la Home
+        setProducts(data.slice(0, 4));
+      } catch (error) {
+        console.error("Error cargando productos destacados:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadFeaturedProducts();
+  }, []);
 
   return (
     <>
       <Navbar />
       <main className="bg-[#f3f5f4] overflow-hidden">
-        {/* HERO SECTION RENOVADO - ATRACTIVO Y MINIMALISTA */}
-        {/* HERO SECTION - RESPONSIVE & MODERN */}
+        {/* HERO SECTION */}
         <section className="relative min-h-screen bg-white flex items-center justify-center pt-28 pb-12 lg:pt-20 overflow-hidden">
           <div className="absolute inset-0 z-0">
             <div className="absolute top-[-10%] right-[-5%] w-[300px] lg:w-[600px] h-[300px] lg:h-[600px] bg-blue-500/5 rounded-full blur-[80px] lg:blur-[120px]" />
@@ -137,10 +159,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* --- EL RESTO DE TUS SECCIONES (No se tocan) --- */}
-        {/* FEATURES SECTION - LIQUID GLASS 2.0 */}
+        {/* FEATURES SECTION */}
         <section className="py-24 bg-[#f0f4f8] relative overflow-hidden">
-          {/* Luces cinéticas de fondo */}
           <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-400/10 rounded-full blur-[120px] animate-pulse" />
           <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-indigo-300/10 rounded-full blur-[120px]" />
 
@@ -240,42 +260,25 @@ export default function Home() {
                   key={idx}
                   variants={itemVariants}
                   whileHover={{ y: -15 }}
-                  className="group relative p-12 rounded-[3.5rem] transition-all duration-700
-                     bg-white/5 backdrop-blur-3xl
-                     border-t border-l border-white/60 border-b border-r border-white/10
-                     shadow-[25px_25px_50px_rgba(0,0,0,0.03),inset_0_0_20px_rgba(255,255,255,0.2)]
-                     hover:shadow-[0_50px_100px_-20px_rgba(59,130,246,0.15),inset_0_0_30px_rgba(255,255,255,0.4)]
-                     overflow-hidden"
+                  className="group relative p-12 rounded-[3.5rem] transition-all duration-700 bg-white/5 backdrop-blur-3xl border-t border-l border-white/60 border-b border-r border-white/10 shadow-[25px_25px_50px_rgba(0,0,0,0.03),inset_0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_50px_100px_-20px_rgba(59,130,246,0.15),inset_0_0_30px_rgba(255,255,255,0.4)] overflow-hidden"
                 >
-                  {/* Capa de Vidrio Líquido (Shimmer) */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
                     <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
                   </div>
-
-                  {/* Cáustica de fondo (Glow de color) */}
                   <div
                     className={`absolute -bottom-20 -right-20 w-64 h-64 bg-gradient-to-br ${feature.color} to-transparent blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity duration-700`}
                   />
-
-                  {/* Header de la tarjeta */}
                   <div className="flex items-center gap-6 mb-8 relative z-10">
-                    <div
-                      className="w-16 h-16 bg-white/30 backdrop-blur-2xl rounded-2xl flex items-center justify-center text-3xl
-                            shadow-[inset_0_0_15px_rgba(255,255,255,0.5)] border border-white/40
-                            group-hover:rotate-[10deg] transition-transform duration-500"
-                    >
+                    <div className="w-16 h-16 bg-white/30 backdrop-blur-2xl rounded-2xl flex items-center justify-center text-3xl shadow-[inset_0_0_15px_rgba(255,255,255,0.5)] border border-white/40 group-hover:rotate-[10deg] transition-transform duration-500">
                       {feature.icon}
                     </div>
                     <h3 className="text-2xl font-black text-slate-900 tracking-tight">
                       {feature.title}
                     </h3>
                   </div>
-
                   <p className="text-slate-600 leading-relaxed font-medium mb-8 relative z-10">
                     {feature.desc}
                   </p>
-
-                  {/* Listado de contenido extra */}
                   <ul className="space-y-3 relative z-10">
                     {feature.points.map((point, pIdx) => (
                       <li
@@ -287,8 +290,6 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
-
-                  {/* Detalle decorativo inferior */}
                   <div className="absolute bottom-6 right-10 text-xs font-black text-blue-600/20 uppercase tracking-widest group-hover:text-blue-600/40 transition-colors">
                     ASTA
                   </div>
@@ -316,59 +317,77 @@ export default function Home() {
               </p>
             </motion.div>
 
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
-            >
-              {FEATURED_PRODUCTS.map((product) => (
-                <motion.div
-                  key={product.id}
-                  variants={itemVariants}
-                  whileHover={{ y: -10 }}
-                  className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100"
-                >
-                  <div className="relative h-48 bg-gray-100 overflow-hidden">
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      className="object-cover hover:scale-110 transition-transform duration-300"
-                    />
-                    {/* <div className="absolute top-4 right-4 bg-[#0b63cd] text-white px-3 py-1 rounded-full text-sm font-bold">
-                      {product.stock} stock
-                    </div> */}
-                  </div>
-
-                  <div className="p-6">
-                    <p className="text-sm text-[#44abff] font-semibold mb-2">
-                      {product.category}
-                    </p>
-                    <h3 className="text-lg font-bold text-[#0b63cd] mb-2 line-clamp-2">
-                      {product.name}
-                    </h3>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                      {product.description}
-                    </p>
-
-                    <div className="flex justify-between items-center">
-                      {/* <p className="text-2xl font-black text-[#44abff]">
-                        ${product.price}
-                      </p> */}
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="bg-[#44abff] text-white px-4 py-2 rounded-lg font-bold hover:bg-[#0b63cd] transition-colors"
-                      >
-                        Ver Detalles
-                      </motion.button>
+            {/* Manejo de Carga asíncrona */}
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {[1, 2, 3, 4].map((n) => (
+                  <div
+                    key={n}
+                    className="bg-white rounded-3xl h-[420px] animate-pulse border border-gray-100 shadow-sm"
+                  />
+                ))}
+              </div>
+            ) : (
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+              >
+                {products.map((product) => (
+                  <motion.div
+                    key={product.id}
+                    variants={itemVariants}
+                    whileHover={{ y: -10 }}
+                    className="bg-white rounded-3xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(11,99,205,0.08)] transition-all duration-300 border border-gray-100/80 flex flex-col h-[440px]"
+                  >
+                    {/* Contenedor superior de la Imagen fija */}
+                    <div className="relative h-48 w-full bg-white flex items-center justify-center p-6 flex-shrink-0">
+                      <Image
+                        src={
+                          product.image &&
+                          product.image.trim() !== "" &&
+                          !product.image.includes("placeholder")
+                            ? product.image
+                            : PRODUCT_PLACEHOLDER
+                        }
+                        alt={product.name}
+                        fill
+                        className="object-contain p-4 hover:scale-105 transition-transform duration-300"
+                        unoptimized={product.image.startsWith("data:")}
+                      />
                     </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
+
+                    {/* Cuerpo de Información exacto de tu diseño previo */}
+                    <div className="p-6 flex-1 flex flex-col justify-between bg-white rounded-b-3xl">
+                      <div className="space-y-2">
+                        <p className="text-xs text-[#44abff] font-semibold uppercase tracking-wider">
+                          {product.category}
+                        </p>
+                        <h3 className="text-base font-bold text-[#0b63cd] line-clamp-2 leading-snug min-h-[44px]">
+                          {product.name}
+                        </h3>
+                        <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed">
+                          {product.description}
+                        </p>
+                      </div>
+
+                      {/* Contenedor de acción inferior alineado a la derecha como en image_26bb97.jpg */}
+                      <div className="flex justify-end items-center pt-4 border-t border-gray-50">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="bg-[#44abff] text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-[#0b63cd] transition-colors shadow-sm"
+                        >
+                          Ver Detalles
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -390,7 +409,6 @@ export default function Home() {
         </section>
 
         {/* BRANDS SECTION */}
-        {/* BRANDS SECTION - CAROUSEL ANIMADO INFINITO */}
         <section className="py-24 bg-white border-y border-slate-50 overflow-hidden">
           <div className="container mx-auto px-6 mb-16">
             <h2 className="text-center text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-4">
@@ -425,10 +443,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* HOW IT WORKS SECTION - DARK PREMIUM EDITION */}
-        {/* HOW IT WORKS SECTION - BRAND COLORS EDITION */}
+        {/* HOW IT WORKS SECTION */}
         <section className="py-32 relative overflow-hidden bg-white">
-          {/* Elementos decorativos de fondo basados en tu paleta */}
           <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-40">
             <div className="absolute -top-[10%] -right-[5%] w-[600px] h-[600px] bg-sky-100 rounded-full blur-[120px]" />
             <div className="absolute top-[20%] left-[-10%] w-[400px] h-[400px] bg-yellow-50 rounded-full blur-[100px]" />
@@ -456,7 +472,6 @@ export default function Home() {
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
-              {/* Línea conectora animada sutil */}
               <div className="hidden lg:block absolute top-[40%] left-0 w-full h-[2px] bg-slate-100 z-0">
                 <motion.div
                   initial={{ width: 0 }}
@@ -512,7 +527,6 @@ export default function Home() {
                   viewport={{ once: true }}
                   className="group relative z-10"
                 >
-                  {/* Card con estilo Glassmorphism sobre fondo claro */}
                   <div className="h-full p-10 rounded-[3rem] bg-slate-50/50 border border-slate-100 backdrop-blur-md transition-all duration-500 hover:bg-white hover:border-blue-200 hover:-translate-y-4 shadow-sm hover:shadow-[0_40px_80px_-20px_rgba(11,99,205,0.15)]">
                     <div className="flex justify-between items-start mb-10">
                       <div
@@ -527,15 +541,12 @@ export default function Home() {
                         {item.step}
                       </span>
                     </div>
-
                     <h4 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">
                       {item.title}
                     </h4>
                     <p className="text-slate-500 leading-relaxed font-medium text-sm group-hover:text-slate-600 transition-colors">
                       {item.description}
                     </p>
-
-                    {/* Barra de progreso inferior */}
                     <div className="mt-8 flex items-center gap-2">
                       <div
                         className={`w-8 h-1.5 ${item.accent} rounded-full group-hover:w-full transition-all duration-700 ease-in-out`}
@@ -625,8 +636,8 @@ export default function Home() {
           </div>
         </section>
 
+        {/* FAQ SECTION */}
         <section className="py-24 bg-white relative overflow-hidden">
-          {/* Fondo decorativo unificado */}
           <div className="absolute inset-0 z-0 pointer-events-none">
             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-50/50 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/4" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-slate-50 rounded-full blur-[100px] translate-y-1/4 -translate-x-1/4" />
@@ -634,7 +645,6 @@ export default function Home() {
 
           <div className="container mx-auto px-6 max-w-7xl relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              {/* BLOQUE IZQUIERDO: Ajustado a 6 columnas para dar más espacio al oso */}
               <div className="lg:col-span-6 space-y-12">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -707,28 +717,17 @@ export default function Home() {
                 </motion.div>
               </div>
 
-              {/* BLOQUE DERECHO: IMAGEN DEL OSO AGRANDADA (6 columnas) */}
-              <motion.div
-                initial={{ opacity: 0, x: 50, scale: 0.9 }}
-                whileInView={{ opacity: 1, x: 0, scale: 1.1 }} // Aumentamos la escala un 10% adicional
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                viewport={{ once: true }}
-                className="lg:col-span-6 flex justify-center items-center relative"
-              >
-                {/* Glow de acento agrandado */}
+              <div className="lg:col-span-6 flex justify-center items-center relative">
                 <div className="absolute w-[120%] aspect-square bg-blue-100/40 rounded-full blur-[120px]" />
-
                 <div className="relative z-10 w-full max-w-[550px] lg:max-w-none">
                   <Image
                     src="/MascotaLentes.png"
                     alt="ASTA Panda Mascot"
-                    width={500} // Aumentamos el ancho base
+                    width={500}
                     height={500}
-                    className="object-contain drop-shadow-[0_45px_80px_rgba(11,99,205,0.2)] lg:scale-125" // Scale 125 para que sobresalga
+                    className="object-contain drop-shadow-[0_45px_80px_rgba(11,99,205,0.2)] lg:scale-125"
                     priority
                   />
-
-                  {/* Badge flotante reposicionado */}
                   <motion.div
                     animate={{ y: [0, -15, 0] }}
                     transition={{
@@ -744,26 +743,8 @@ export default function Home() {
                     </p>
                   </motion.div>
                 </div>
-              </motion.div>
+              </div>
             </div>
-
-            {/* Footer de sección */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="mt-16 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4"
-            >
-              <p className="text-slate-400 text-sm font-medium italic">
-                ¿Tu duda no está aquí? Estamos listos para asesorarte.
-              </p>
-              <a
-                href="/contact"
-                className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-lg"
-              >
-                Contactar Experto
-              </a>
-            </motion.div>
           </div>
         </section>
 

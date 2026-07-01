@@ -34,7 +34,7 @@ export default function CatalogPage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const res = await fetch("/api/productos");
+        const res = await fetch("/api/productos/rapidito");
         if (!res.ok) throw new Error("Error al obtener los datos");
 
         const data = await res.json();
