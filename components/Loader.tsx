@@ -2,36 +2,16 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export const PageLoader = () => {
-  const pathname = usePathname();
-  const isCatalog = pathname?.startsWith("/catalog");
-
-  const [loading, setLoading] = useState(() => {
-    try {
-      return !sessionStorage.getItem("asta_loader_shown");
-    } catch {
-      return true;
-    }
-  });
-
-  // Mostrar loader cada vez que se entra al catálogo
-  useEffect(() => {
-    if (isCatalog) setLoading(true);
-  }, [isCatalog]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading) return;
-    const timer = setTimeout(() => {
-      setLoading(false);
-      try {
-        sessionStorage.setItem("asta_loader_shown", "1");
-      } catch {}
-    }, 2500);
+    // Simulamos la carga o esperamos a que el video/recursos estén listos
+    const timer = setTimeout(() => setLoading(false), 2500);
     return () => clearTimeout(timer);
-  }, [loading]);
+  }, []);
 
   return (
     <AnimatePresence>

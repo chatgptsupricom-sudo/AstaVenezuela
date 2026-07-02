@@ -222,9 +222,6 @@ export default function CatalogPage() {
                         <Link
                           href={`/producto/${product.code}`}
                           className="w-full text-center px-4 py-2 bg-[#44abff] text-white rounded-lg font-bold hover:bg-[#0b63cd] transition-colors mt-auto block"
-                          onClick={() => {
-                            try { sessionStorage.removeItem("asta_loader_shown"); } catch {}
-                          }}
                         >
                           Ver Detalles
                         </Link>
