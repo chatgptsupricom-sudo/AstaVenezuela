@@ -19,6 +19,7 @@ export default function ProductDetailPageClient() {
       .then((data) => {
         setAllProducts(data);
         setProduct(data.find((p: any) => p.code === code));
+        window.dispatchEvent(new Event("asta:content-ready"));
       });
   }, [code]);
 

@@ -2,16 +2,31 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export const PageLoader = () => {
+  const pathname = usePathname();
+  const isProductPage = pathname?.startsWith("/producto/");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulamos la carga o esperamos a que el video/recursos estén listos
-    const timer = setTimeout(() => setLoading(false), 2500);
-    return () => clearTimeout(timer);
-  }, []);
+    setLoading(true);
+
+    if (isProductPage) {
+      // En páginas de producto esperar el evento de carga real, con fallback de 8s
+      const done = () => setLoading(false);
+      window.addEventListener("asta:content-ready", done, { once: true });
+      const fallback = setTimeout(done, 8000);
+      return () => {
+        window.removeEventListener("asta:content-ready", done);
+        clearTimeout(fallback);
+      };
+    } else {
+      const timer = setTimeout(() => setLoading(false), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname, isProductPage]);
 
   return (
     <AnimatePresence>
