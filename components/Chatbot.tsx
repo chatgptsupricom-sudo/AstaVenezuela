@@ -151,7 +151,13 @@ const renderBotMessage = (text: string, images: Record<string, string>) => {
 };
 
 export const Chatbot = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(() => {
+    try {
+      return localStorage.getItem("asta_chat_open") === "true";
+    } catch {
+      return false;
+    }
+  });
   const [messages, setMessages] = useState(DEFAULT_MESSAGES);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -191,6 +197,12 @@ export const Chatbot = () => {
       localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
     } catch {}
   }, [messages]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("asta_chat_open", String(isOpen));
+    } catch {}
+  }, [isOpen]);
 
   const handleClear = () => {
     setMessages(DEFAULT_MESSAGES);
