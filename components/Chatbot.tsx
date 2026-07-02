@@ -25,7 +25,7 @@ const DEFAULT_MESSAGES = [
   },
 ];
 
-const PRODUCTS_API_URL = "https://astavenezuela.com/api/productos";
+const PRODUCTS_API_URL = "https://astavenezuela.com/api/productos/rapidito";
 let imageCache: Record<string, string> | null = null;
 let imagePromise: Promise<Record<string, string>> | null = null;
 
