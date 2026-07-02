@@ -7,6 +7,7 @@ import { useState } from "react";
 
 export default function ContactPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSending, setIsSending] = useState(false); // Estado para deshabilitar botón durante el envío
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -24,14 +25,38 @@ export default function ContactPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
-    // Simulación de envío
-    setTimeout(() => {
-      setIsSubmitted(false);
+    setIsSending(true);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error en la petición de envío");
+      }
+
+      setIsSubmitted(true);
       setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
-    }, 3000);
+
+      // Mantiene el aviso de éxito por 4 segundos
+      setTimeout(() => {
+        setIsSubmitted(false);
+      }, 4000);
+    } catch (error) {
+      console.error("Error al enviar el formulario:", error);
+      alert(
+        "Hubo un error al enviar tu solicitud. Por favor, inténtalo de nuevo.",
+      );
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -55,12 +80,6 @@ export default function ContactPage() {
                 Conectamos con{" "}
                 <span className="text-blue-600">toda Venezuela.</span>
               </h1>
-              {/* <p className="text-xl lg:text-2xl text-slate-500 max-w-3xl mx-auto font-medium leading-relaxed">
-                Nuestra infraestructura logística nos permite prescindir de
-                oficinas físicas para llegar directamente a ti. Llevamos la
-                excelencia de ASTA a cada hogar y empresa del país con la
-                rapidez que tu productividad exige.
-              </p> */}
             </motion.div>
           </div>
         </section>
@@ -88,7 +107,7 @@ export default function ContactPage() {
                       Llámanos
                     </h4>
                     <p className="text-lg text-slate-600 font-semibold">
-                      +58 (422)-8002024
+                      +58 (422)-8008204
                     </p>
                   </div>
                 </div>
@@ -102,7 +121,7 @@ export default function ContactPage() {
                       Escríbenos
                     </h4>
                     <p className="text-lg text-slate-600 font-semibold">
-                      info@asta.com.ve
+                      webstore@astavenezuela.com
                     </p>
                     <p className="text-sm text-slate-400">
                       Respuesta en menos de 24h
@@ -152,7 +171,6 @@ export default function ContactPage() {
             </div>
 
             {/* --- FORMULARIO (LADO DERECHO) --- */}
-            {/* --- FORMULARIO CON SOMBRA MEJORADA --- */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -199,8 +217,9 @@ export default function ContactPage() {
                             value={formData.name}
                             onChange={handleChange}
                             required
-                            className="w-full px-8 py-5 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 placeholder:text-slate-300"
-                            placeholder="Ej. Riccardo Fusco"
+                            disabled={isSending}
+                            className="w-full px-8 py-5 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 placeholder:text-slate-300 disabled:opacity-50"
+                            placeholder="Nombre Apellido"
                           />
                         </div>
                         <div className="space-y-2">
@@ -213,7 +232,8 @@ export default function ContactPage() {
                             value={formData.email}
                             onChange={handleChange}
                             required
-                            className="w-full px-8 py-5 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 placeholder:text-slate-300"
+                            disabled={isSending}
+                            className="w-full px-8 py-5 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 placeholder:text-slate-300 disabled:opacity-50"
                             placeholder="correo@empresa.com"
                           />
                         </div>
@@ -229,7 +249,8 @@ export default function ContactPage() {
                             name="phone"
                             value={formData.phone}
                             onChange={handleChange}
-                            className="w-full px-8 py-5 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 placeholder:text-slate-300"
+                            disabled={isSending}
+                            className="w-full px-8 py-5 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 placeholder:text-slate-300 disabled:opacity-50"
                             placeholder="+58 4XX XXXXXXX"
                           />
                         </div>
@@ -242,7 +263,8 @@ export default function ContactPage() {
                             value={formData.subject}
                             onChange={handleChange}
                             required
-                            className="w-full px-8 py-5 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 appearance-none cursor-pointer"
+                            disabled={isSending}
+                            className="w-full px-8 py-5 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 appearance-none cursor-pointer disabled:opacity-50"
                           >
                             <option value="">Seleccionar...</option>
                             <option value="consulta">
@@ -266,20 +288,22 @@ export default function ContactPage() {
                           value={formData.message}
                           onChange={handleChange}
                           required
+                          disabled={isSending}
                           rows={4}
-                          className="w-full px-8 py-6 bg-slate-50 border-none rounded-[2.5rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 placeholder:text-slate-300 resize-none"
+                          className="w-full px-8 py-6 bg-slate-50 border-none rounded-[2.5rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 placeholder:text-slate-300 resize-none disabled:opacity-50"
                           placeholder="Escriba aquí su requerimiento..."
                         />
                       </div>
 
                       <motion.button
-                        whileHover={{ scale: 1.01, y: -2 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={!isSending ? { scale: 1.01, y: -2 } : {}}
+                        whileTap={!isSending ? { scale: 0.98 } : {}}
                         type="submit"
-                        className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] flex items-center justify-center gap-4 hover:bg-blue-600 transition-all shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] hover:shadow-blue-500/30"
+                        disabled={isSending}
+                        className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] flex items-center justify-center gap-4 hover:bg-blue-600 transition-all shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] hover:shadow-blue-500/30 disabled:bg-slate-400 disabled:cursor-not-allowed"
                       >
                         <Send size={20} />
-                        Enviar Solicitud
+                        {isSending ? "Enviando..." : "Enviar Solicitud"}
                       </motion.button>
                     </form>
                   </>
