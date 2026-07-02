@@ -176,17 +176,15 @@ export const Chatbot = () => {
     try {
       const saved = localStorage.getItem(CHAT_STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        const { messages: parsed, savedAt } = JSON.parse(saved);
+        const expired = Date.now() - savedAt > 24 * 60 * 60 * 1000;
+        if (!expired && Array.isArray(parsed) && parsed.length > 0) {
           setMessages(parsed);
-          if (
-            parsed.some(
-              (m) =>
-                typeof m.text === "string" && m.text.includes("[[PRODUCTO]]"),
-            )
-          ) {
+          if (parsed.some((m) => typeof m.text === "string" && m.text.includes("[[PRODUCTO]]"))) {
             fetchProductImages().then(setProductImages);
           }
+        } else if (expired) {
+          localStorage.removeItem(CHAT_STORAGE_KEY);
         }
       }
     } catch {}
@@ -194,7 +192,7 @@ export const Chatbot = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({ messages, savedAt: Date.now() }));
     } catch {}
   }, [messages]);
 
