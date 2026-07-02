@@ -106,8 +106,6 @@ const ProductCard = ({
       </div>
       <a
         href={`${PRODUCT_BASE_URL}${encodeURIComponent(code)}`}
-        target="_blank"
-        rel="noopener noreferrer"
         className="self-start text-xs font-bold text-white bg-[#0b63cd] hover:bg-[#0950a8] px-3 py-1.5 rounded-lg transition-colors"
       >
         Ver más
@@ -153,7 +151,13 @@ const renderBotMessage = (text: string, images: Record<string, string>) => {
 };
 
 export const Chatbot = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(() => {
+    try {
+      return localStorage.getItem("asta_chat_open") === "true";
+    } catch {
+      return false;
+    }
+  });
   const [messages, setMessages] = useState(DEFAULT_MESSAGES);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -193,6 +197,12 @@ export const Chatbot = () => {
       localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
     } catch {}
   }, [messages]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("asta_chat_open", String(isOpen));
+    } catch {}
+  }, [isOpen]);
 
   const handleClear = () => {
     setMessages(DEFAULT_MESSAGES);
