@@ -2,9 +2,13 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export const PageLoader = () => {
+  const pathname = usePathname();
+  const isCatalog = pathname?.startsWith("/catalog");
+
   const [loading, setLoading] = useState(() => {
     try {
       return !sessionStorage.getItem("asta_loader_shown");
@@ -12,6 +16,11 @@ export const PageLoader = () => {
       return true;
     }
   });
+
+  // Mostrar loader cada vez que se entra al catálogo
+  useEffect(() => {
+    if (isCatalog) setLoading(true);
+  }, [isCatalog]);
 
   useEffect(() => {
     if (!loading) return;
