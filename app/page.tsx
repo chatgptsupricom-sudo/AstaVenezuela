@@ -10,10 +10,18 @@ import {
 } from "@/components/ui/accordion";
 import { BRANDS } from "@/lib/products";
 import { motion } from "framer-motion";
-import { FileText, Search, ShieldCheck, ShoppingCart } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Search,
+  ShieldCheck,
+  ShoppingCart,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 const MascotScene = dynamic(
   () =>
@@ -30,8 +38,8 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2,
-      delayChildren: 0.3,
+      staggerChildren: 0.05,
+      delayChildren: 0.1,
     },
   },
 };
@@ -41,17 +49,20 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.8, ease: "easeOut" },
+    transition: { duration: 0.6, ease: "easeOut" },
   },
 };
 
-// 🖼️ Define aquí la ruta de tu imagen por defecto dentro de la carpeta /public
 const PRODUCT_PLACEHOLDER = "/Chatbot2.jpeg";
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState("Tóneres HP");
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
+
+  // 🟢 Ref para controlar el scroll del carrusel por botones
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadFeaturedProducts() {
@@ -60,8 +71,10 @@ export default function Home() {
         if (!res.ok) throw new Error("Failed to fetch products");
         const data = await res.json();
 
-        // Tomamos los primeros 4 para la cuadrícula de la Home
-        setProducts(data.slice(0, 4));
+        // 🎲 ALEATORIEDAD: Desordenamos el array completo para que las primeras posiciones cambien siempre
+        const randomizedData = [...data].sort(() => Math.random() - 0.5);
+
+        setProducts(randomizedData);
       } catch (error) {
         console.error("Error cargando productos destacados:", error);
       } finally {
@@ -70,6 +83,38 @@ export default function Home() {
     }
     loadFeaturedProducts();
   }, []);
+
+  // 🔄 AUTO-PLAY: Movimiento automatizado cada 3.5 segundos (se detiene si el mouse está encima)
+  useEffect(() => {
+    if (isLoading || products.length === 0 || isHovered) return;
+
+    const interval = setInterval(() => {
+      if (carouselRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+        // Si llegó al final, vuelve al inicio; si no, avanza el tamaño de una tarjeta
+        const targetScroll =
+          scrollLeft + clientWidth >= scrollWidth - 10 ? 0 : scrollLeft + 320;
+
+        carouselRef.current.scrollTo({
+          left: targetScroll,
+          behavior: "smooth",
+        });
+      }
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isLoading, products, isHovered]);
+
+  // 🕹️ LÓGICA DE LOS BOTONES: Desplazamiento manual
+  const scroll = (direction: "left" | "right") => {
+    if (carouselRef.current) {
+      const offset = direction === "left" ? -320 : 320;
+      carouselRef.current.scrollBy({
+        left: offset,
+        behavior: "smooth",
+      });
+    }
+  };
 
   return (
     <>
@@ -299,7 +344,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* FEATURED PRODUCTS SECTION */}
+        {/* FEATURED PRODUCTS SECTION - INTUITIVE INTERACTIVE CAROUSEL */}
         <section className="py-20 bg-gradient-to-b from-white to-[#f3f5f4]">
           <div className="container mx-auto px-6 max-w-7xl">
             <motion.div
@@ -317,76 +362,109 @@ export default function Home() {
               </p>
             </motion.div>
 
-            {/* Manejo de Carga asíncrona */}
             {isLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {[1, 2, 3, 4].map((n) => (
                   <div
                     key={n}
-                    className="bg-white rounded-3xl h-[420px] animate-pulse border border-gray-100 shadow-sm"
+                    className="bg-white rounded-3xl h-[440px] w-full animate-pulse border border-gray-100 shadow-sm"
                   />
                 ))}
               </div>
             ) : (
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+              /* Contenedor relativo para alojar los botones sobre las tarjetas */
+              <div
+                className="relative w-full group"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
               >
-                {products.map((product) => (
-                  <motion.div
-                    key={product.id}
-                    variants={itemVariants}
-                    whileHover={{ y: -10 }}
-                    className="bg-white rounded-3xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(11,99,205,0.08)] transition-all duration-300 border border-gray-100/80 flex flex-col h-[440px]"
-                  >
-                    {/* Contenedor superior de la Imagen fija */}
-                    <div className="relative h-48 w-full bg-white flex items-center justify-center p-6 flex-shrink-0">
-                      <Image
-                        src={
-                          product.image &&
-                          product.image.trim() !== "" &&
-                          !product.image.includes("placeholder")
-                            ? product.image
-                            : PRODUCT_PLACEHOLDER
-                        }
-                        alt={product.name}
-                        fill
-                        className="object-contain p-4 hover:scale-105 transition-transform duration-300"
-                        unoptimized={product.image.startsWith("data:")}
-                      />
-                    </div>
+                {/* 🎛️ BOTÓN IZQUIERDO */}
+                <button
+                  onClick={() => scroll("left")}
+                  aria-label="Anterior producto"
+                  className="absolute left-4 top-[50%] -translate-y-1/2 z-30 bg-white border border-slate-100 p-4 rounded-full shadow-xl text-[#0b63cd] hover:bg-[#0b63cd] hover:text-white transition-all opacity-0 group-hover:opacity-100 hidden md:flex items-center justify-center"
+                >
+                  <ChevronLeft size={24} strokeWidth={3} />
+                </button>
 
-                    {/* Cuerpo de Información exacto de tu diseño previo */}
-                    <div className="p-6 flex-1 flex flex-col justify-between bg-white rounded-b-3xl">
-                      <div className="space-y-2">
-                        <p className="text-xs text-[#44abff] font-semibold uppercase tracking-wider">
-                          {product.category}
-                        </p>
-                        <h3 className="text-base font-bold text-[#0b63cd] line-clamp-2 leading-snug min-h-[44px]">
-                          {product.name}
-                        </h3>
-                        <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed">
-                          {product.description}
-                        </p>
+                {/* 🎛️ BOTÓN DERECHO */}
+                <button
+                  onClick={() => scroll("right")}
+                  aria-label="Siguiente producto"
+                  className="absolute right-4 top-[50%] -translate-y-1/2 z-30 bg-white border border-slate-100 p-4 rounded-full shadow-xl text-[#0b63cd] hover:bg-[#0b63cd] hover:text-white transition-all opacity-0 group-hover:opacity-100 hidden md:flex items-center justify-center"
+                >
+                  <ChevronRight size={24} strokeWidth={3} />
+                </button>
+
+                {/* 🔄 CONTENEDOR OPTIMIZADO: Aseguramos ancho completo y comportamiento fluido */}
+                <motion.div
+                  ref={carouselRef}
+                  variants={containerVariants}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  className="flex flex-row w-full gap-6 overflow-x-auto lg:overflow-x-hidden snap-x snap-mandatory pb-8 pt-4 px-2 scroll-smooth scrollbar-none justify-start lg:justify-between items-center"
+                  style={{ scrollbarWidth: "none" }}
+                >
+                  {products.map((product) => (
+                    <motion.div
+                      key={product.id}
+                      variants={itemVariants}
+                      whileHover={{ y: -10 }}
+                      /* ⚡ SOLUCIÓN AQUÍ: Usamos min-w y w combinados con porcentajes fijos basados en la cantidad de columnas deseada */
+                      className="bg-white rounded-3xl overflow-hidden shadow-[0_10px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(11,99,205,0.08)] transition-all duration-300 border border-gray-100/80 flex flex-col h-[460px] w-[280px] min-w-[280px] md:w-[calc(50%-12px)] md:min-w-[calc(50%-12px)] lg:w-[calc(25%-18px)] lg:min-w-[calc(25%-18px)] flex-shrink-0 snap-start"
+                    >
+                      {/* Contenedor de la Imagen */}
+                      <div className="relative h-48 w-full bg-white flex items-center justify-center p-6 flex-shrink-0">
+                        <Image
+                          src={
+                            product.image &&
+                            product.image.trim() !== "" &&
+                            !product.image.includes("placeholder")
+                              ? product.image
+                              : PRODUCT_PLACEHOLDER
+                          }
+                          alt={product.name}
+                          fill
+                          className="object-contain p-4 hover:scale-105 transition-transform duration-300"
+                          unoptimized={product.image.startsWith("data:")}
+                        />
                       </div>
 
-                      {/* Contenedor de acción inferior alineado a la derecha como en image_26bb97.jpg */}
-                      <div className="flex justify-end items-center pt-4 border-t border-gray-50">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="bg-[#44abff] text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-[#0b63cd] transition-colors shadow-sm"
-                        >
-                          Ver Detalles
-                        </motion.button>
+                      {/* Cuerpo de Información */}
+                      <div className="p-6 flex-1 flex flex-col justify-between bg-white rounded-b-3xl">
+                        <div className="space-y-2">
+                          <p className="text-[10px] text-[#44abff] font-bold uppercase tracking-wider">
+                            {product.category || "Consumibles"}
+                          </p>
+                          <h3 className="text-sm font-bold text-[#0b63cd] line-clamp-2 leading-snug min-h-[40px]">
+                            {product.name}
+                          </h3>
+                          <p className="text-gray-400 text-xs line-clamp-2 leading-relaxed">
+                            {product.description}
+                          </p>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-50 flex justify-center w-full">
+                          <Link
+                            href={`/producto/${product.code || product.id}`}
+                            passHref
+                            className="w-full"
+                          >
+                            <motion.span
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              className="block bg-[#44abff] text-white w-full py-3 rounded-xl text-xs font-bold hover:bg-[#0b63cd] transition-colors shadow-sm text-center cursor-pointer"
+                            >
+                              Ver Detalles
+                            </motion.span>
+                          </Link>
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
             )}
 
             <motion.div
@@ -394,7 +472,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
-              className="text-center mt-12"
+              className="text-center mt-8"
             >
               <motion.a
                 href="/catalog"
@@ -520,7 +598,7 @@ export default function Home() {
                 },
               ].map((item, idx) => (
                 <motion.div
-                  key={idx}
+                  key={item.step}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.2 }}
