@@ -106,8 +106,6 @@ const ProductCard = ({
       </div>
       <a
         href={`${PRODUCT_BASE_URL}${encodeURIComponent(code)}`}
-        target="_blank"
-        rel="noopener noreferrer"
         className="self-start text-xs font-bold text-white bg-[#0b63cd] hover:bg-[#0950a8] px-3 py-1.5 rounded-lg transition-colors"
       >
         Ver más
