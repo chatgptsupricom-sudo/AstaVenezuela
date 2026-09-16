@@ -394,6 +394,9 @@ export default function CatalogPage() {
                               alt={product.name || "Producto ASTA"}
                               width={150}
                               height={150}
+                              // El endpoint ya entrega una miniatura; evita que
+                              // el optimizador vuelva a proxificar esta URL.
+                              unoptimized
                               className="object-contain hover:scale-110 transition-transform"
                             />
                             <div className="absolute top-2 right-2 rounded bg-gray-100 px-2 py-1 font-mono text-xs uppercase tracking-wider text-gray-600">
