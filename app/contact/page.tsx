@@ -1,5 +1,7 @@
 "use client";
 
+import { Banner } from "@/components/Banner";
+import { ControlPatches, ControlStrip } from "@/components/ControlStrip";
 import { Navbar } from "@/components/Navbar";
 import { motion } from "framer-motion";
 import { CheckCircle2, Globe, Mail, Phone, Send } from "lucide-react";
@@ -64,27 +66,70 @@ export default function ContactPage() {
       <Navbar />
       <main className="bg-white min-h-screen pt-24 overflow-hidden">
         {/* --- HEADER SECCIÓN --- */}
-        <section className="relative py-24 bg-slate-50">
-          <div className="absolute inset-0 z-0 opacity-30">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-600/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
-          </div>
-
-          <div className="container mx-auto px-6 relative z-10 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <h1 className="text-5xl lg:text-7xl font-black text-slate-900 mb-8 tracking-tighter">
-                Conectamos con{" "}
-                <span className="text-blue-600">toda Venezuela.</span>
-              </h1>
-            </motion.div>
+        {/* Base en --ink (#0a1a2f, la tinta oscura original), con un
+            brillo radial hacia --brand-strong desde donde arranca el texto
+            -- como el degradado anterior pero con el par de tonos correcto.
+            Sin cálculo de tope esta vez: --ink y --brand-strong ya estaban
+            verificados para texto blanco en 17,48:1 y 5,71:1 respectivamente
+            (medidos antes en esta misma sesión), así que cualquier punto
+            intermedio del radial cae dentro de ese rango. */}
+        <section className="bg-[radial-gradient(140%_140%_at_12%_15%,var(--brand-strong)_0%,var(--ink)_100%)] py-14 text-white">
+          <div className="container mx-auto max-w-7xl px-6">
+            <div className="mb-6 flex items-center gap-3">
+              <ControlPatches />
+              <span className="font-mono text-xs uppercase tracking-[0.2em] text-white">
+                Respuesta en horario laboral
+              </span>
+            </div>
+            <h1 className="font-display text-[clamp(2.5rem,6vw,4.5rem)] font-black uppercase leading-none tracking-tight [font-stretch:115%]">
+              Contacto
+            </h1>
+            <p className="mt-4 max-w-2xl text-lg text-white">
+              Dinos qué impresora tienes y qué necesitas. Te decimos qué
+              consumible le corresponde y en qué presentación.
+            </p>
           </div>
         </section>
 
-        <div className="container mx-auto px-6 max-w-7xl py-20">
+        <ControlStrip alto="h-2" />
+
+        {/* Banners por tipo de consulta: cada uno llega con una pregunta
+            distinta y con distinta urgencia. */}
+        <div className="bg-surface py-10">
+          <div className="container mx-auto max-w-7xl px-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <Banner
+                canal="c"
+                dato="Compra"
+                titulo="Necesito un consumible"
+                descripcion="Busca por código o por modelo de impresora y pide cotización."
+                href="/catalog"
+                accion="Ir al catálogo"
+                indice={0}
+              />
+              <Banner
+                canal="m"
+                dato="Distribución"
+                titulo="Quiero vender ASTA"
+                descripcion="Condiciones para centros de copiado, mayoristas y puntos de venta."
+                href="#formulario"
+                accion="Escribir al equipo"
+                indice={1}
+              />
+              <Banner
+                canal="y"
+                dato="Soporte"
+                titulo="Tengo un problema técnico"
+                descripcion="Rendimiento por debajo de lo esperado, chips o compatibilidad."
+                href="#formulario"
+                accion="Reportar el caso"
+                indice={2}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div id="formulario" className="container mx-auto max-w-7xl px-6 py-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
             {/* --- INFO DE CONTACTO (LADO IZQUIERDO) --- */}
             <div className="lg:col-span-4 space-y-12">
@@ -94,7 +139,7 @@ export default function ContactPage() {
                 viewport={{ once: true }}
                 className="space-y-8"
               >
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+                <h2 className="font-display text-3xl font-black uppercase tracking-tight text-ink [font-stretch:115%]">
                   Canales Directos
                 </h2>
 
@@ -197,7 +242,7 @@ export default function ContactPage() {
                 ) : (
                   <>
                     <div className="mb-12">
-                      <h2 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">
+                      <h2 className="mb-3 font-display text-4xl font-black uppercase tracking-tight text-ink [font-stretch:115%]">
                         Gestión de Solicitudes
                       </h2>
                       <p className="text-lg text-slate-500 font-medium">

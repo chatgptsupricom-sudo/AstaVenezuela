@@ -50,7 +50,7 @@ export function FAQ() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-5xl font-black text-[#0b63cd] mb-4">
+          <h2 className="text-5xl font-black text-brand-strong mb-4">
             Preguntas Frecuentes
           </h2>
           <p className="text-gray-700 text-lg">
@@ -80,7 +80,7 @@ export function FAQ() {
                 <motion.svg
                   animate={{ rotate: openIndex === idx ? 180 : 0 }}
                   transition={{ duration: 0.3 }}
-                  className="w-6 h-6 text-[#0b63cd] flex-shrink-0"
+                  className="w-6 h-6 text-brand-strong flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -125,7 +125,7 @@ export function FAQ() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-3 bg-[#0b63cd] text-white rounded-full font-bold hover:bg-[#0b2d4d] transition-colors"
+            className="px-8 py-3 bg-brand-strong text-white rounded-full font-bold hover:bg-brand-navy transition-colors"
           >
             Contacta a Nuestro Equipo
           </motion.button>

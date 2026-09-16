@@ -1,6 +1,9 @@
 "use client";
 
+import { Banner } from "@/components/Banner";
 import { Chatbot } from "@/components/Chatbot";
+import { FeatureIcon } from "@/components/FeatureIcon";
+import { ControlPatches, ControlStrip } from "@/components/ControlStrip";
 import { Navbar } from "@/components/Navbar";
 import {
   Accordion,
@@ -11,12 +14,24 @@ import {
 import { BRANDS } from "@/lib/products";
 import { motion } from "framer-motion";
 import {
+  Award,
   ChevronLeft,
   ChevronRight,
+  Crosshair,
   FileText,
+  Gauge,
+  Globe,
+  Handshake,
+  Lightbulb,
+  Mail,
+  Package,
+  Phone,
   Search,
   ShieldCheck,
   ShoppingCart,
+  Star,
+  Wallet,
+  Wrench,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -88,6 +103,14 @@ export default function Home() {
   useEffect(() => {
     if (isLoading || products.length === 0 || isHovered) return;
 
+    // El CSS global ya frena transition/animate-*, pero un setInterval que
+    // llama a scrollTo() no es CSS: sigue moviendo la pagina aunque el
+    // sistema pida "reducir movimiento". Se respeta aqui explicitamente.
+    const prefiereMenosMovimiento = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (prefiereMenosMovimiento) return;
+
     const interval = setInterval(() => {
       if (carouselRef.current) {
         const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
@@ -119,96 +142,111 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      <main className="bg-[#f3f5f4] overflow-hidden">
+      <main className="bg-surface overflow-hidden">
         {/* HERO SECTION */}
-        <section className="relative min-h-screen bg-white flex items-center justify-center pt-28 pb-12 lg:pt-20 overflow-hidden">
-          <div className="absolute inset-0 z-0">
-            <div className="absolute top-[-10%] right-[-5%] w-[300px] lg:w-[600px] h-[300px] lg:h-[600px] bg-blue-500/5 rounded-full blur-[80px] lg:blur-[120px]" />
-            <div className="absolute bottom-[5%] left-[-10%] w-[250px] lg:w-[500px] h-[250px] lg:h-[500px] bg-blue-600/5 rounded-full blur-[80px] lg:blur-[100px]" />
-          </div>
-
-          <div className="container mx-auto px-6 relative z-10 max-w-7xl">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <section className="relative bg-white pt-28 pb-0 lg:pt-24">
+          <div className="container mx-auto max-w-7xl px-6">
+            <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-12">
+              {/* Bloque de titular */}
               <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="text-center lg:text-left order-2 lg:order-1"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, ease: "easeOut" }}
+                className="order-2 lg:order-1 lg:col-span-7"
               >
-                <h1 className="text-5xl md:text-7xl lg:text-[100px] font-black text-slate-900 leading-[0.9] lg:leading-[0.85] tracking-tight mb-6 lg:mb-8">
-                  Impresión <br />
-                  <span className="text-blue-600">Perfecta</span>
+                <div className="mb-7 flex items-center gap-3">
+                  <ControlPatches />
+                  <span className="font-mono text-xs uppercase tracking-[0.2em] text-slate-500">
+                    Tóner · Tintas · Drums · Chips
+                  </span>
+                </div>
+
+                <h1 className="font-display text-[clamp(2.75rem,7vw,5.5rem)] font-black uppercase leading-[0.86] tracking-[-0.02em] text-ink [font-stretch:125%]">
+                  Impresion <span className="text-[#155DFC]">Perfecta</span>
                 </h1>
 
-                <p className="text-base md:text-lg lg:text-xl text-slate-500 max-w-lg mx-auto lg:mx-0 leading-relaxed mb-8 lg:mb-10 font-medium">
-                  Potencia tu productividad con consumibles de alto rendimiento.
-                  Desde 1995, la marca #1 de Venezuela en nitidez y garantía.
+                <p className="mt-7 max-w-xl text-lg leading-relaxed text-slate-600">
+                  Tóner, tintas, drums y chips compatibles con las impresoras
+                  que ya tienes. Sin cambiar de equipo ni de proveedor.
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <motion.a
+                <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                  <Link
                     href="/catalog"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="px-8 lg:px-10 py-4 lg:py-5 bg-slate-900 text-white rounded-2xl font-bold text-lg shadow-xl shadow-slate-900/10 transition-all text-center"
+                    className="rounded-lg bg-ink px-8 py-4 text-center font-display font-bold text-white transition-colors hover:bg-brand-strong focus-on-brand"
                   >
-                    Ver Catálogo
-                  </motion.a>
-                  <motion.a
+                    Ver el catálogo
+                  </Link>
+                  <Link
                     href="/contact"
-                    className="px-8 lg:px-10 py-4 lg:py-5 border-2 border-slate-200 text-slate-600 rounded-2xl font-bold text-lg hover:bg-slate-50 transition-all text-center"
+                    className="rounded-lg border-2 border-slate-200 px-8 py-4 text-center font-display font-bold text-ink transition-colors hover:border-ink"
                   >
-                    Asesoría Gratuita
-                  </motion.a>
-                </div>
-
-                <div className="flex justify-center lg:justify-start gap-8 lg:gap-12 mt-12 lg:mt-16 pt-8 border-t border-slate-100 text-slate-400">
-                  <div>
-                    <p className="text-2xl lg:text-3xl font-black text-slate-900">
-                      200+
-                    </p>
-                    <p className="text-[10px] lg:text-xs uppercase tracking-widest font-bold">
-                      Modelos
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-2xl lg:text-3xl font-black text-slate-900">
-                      30K+
-                    </p>
-                    <p className="text-[10px] lg:text-xs uppercase tracking-widest font-bold">
-                      Clientes
-                    </p>
-                  </div>
+                    Hablar con un asesor
+                  </Link>
                 </div>
               </motion.div>
 
+              {/* Mascota */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 1, delay: 0.3 }}
-                className="relative h-[350px] md:h-[500px] lg:h-[650px] flex items-center justify-center order-1 lg:order-2"
+                initial={{ opacity: 0, scale: 0.94 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.15 }}
+                className="relative order-1 flex items-end justify-center lg:order-2 lg:col-span-5"
               >
-                <div className="absolute w-[80%] aspect-square bg-blue-50 rounded-full blur-3xl opacity-60" />
-                <div className="relative w-full h-full z-10 flex items-center justify-center">
-                  <Image
-                    src="/ASTA MASCOTA.png"
-                    alt="Mascota ASTA"
-                    width={500}
-                    height={500}
-                    priority
-                    className="w-auto h-full max-h-[300px] md:max-h-[450px] lg:max-h-full object-contain drop-shadow-[0_20px_50px_rgba(59,130,246,0.2)]"
-                  />
-                </div>
+                <Image
+                  src="/ASTA MASCOTA.png"
+                  alt="Mascota de ASTA"
+                  width={500}
+                  height={500}
+                  priority
+                  sizes="(max-width: 1024px) 60vw, 420px"
+                  className="relative h-auto max-h-[280px] w-auto object-contain md:max-h-[380px] lg:max-h-[460px]"
+                />
               </motion.div>
+            </div>
+          </div>
+
+          {/* La tira cierra el pliego y separa el titular de los banners */}
+          <ControlStrip className="mt-12" alto="h-2" />
+
+          {/* Banners: lo que un comprador pregunta antes de pedir precio */}
+          <div className="bg-surface py-10">
+            <div className="container mx-auto max-w-7xl px-6">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <Banner
+                  canal="c"
+                  dato={products.length > 0 ? `${products.length}+` : "···"}
+                  titulo="Modelos compatibles"
+                  descripcion="HP, Canon, Epson, Brother, Samsung y Xerox. Busca por código y comprueba el tuyo."
+                  href="/catalog"
+                  accion="Buscar mi modelo"
+                  indice={0}
+                />
+                <Banner
+                  canal="m"
+                  dato="30K+"
+                  titulo="Clientes atendidos"
+                  descripcion="Oficinas, centros de copiado y distribuidores en toda Venezuela."
+                  href="/about"
+                  accion="Conocer ASTA"
+                  indice={1}
+                />
+                <Banner
+                  canal="y"
+                  dato="1995"
+                  titulo="Años en el mercado"
+                  descripcion="Tres décadas de respaldo, stock y asesoría técnica en Venezuela."
+                  href="/contact"
+                  accion="Pedir asesoría"
+                  indice={2}
+                />
+              </div>
             </div>
           </div>
         </section>
 
         {/* FEATURES SECTION */}
-        <section className="py-24 bg-[#f0f4f8] relative overflow-hidden">
-          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-400/10 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-indigo-300/10 rounded-full blur-[120px]" />
-
+        <section className="relative bg-surface-alt py-24">
           <div className="container mx-auto px-6 max-w-7xl">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -217,7 +255,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-center mb-24"
             >
-              <h2 className="text-sm font-black text-blue-600 uppercase tracking-[0.4em] mb-4">
+              <h2 className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-brand-strong">
                 Ecosistema de Calidad
               </h2>
               <h3 className="text-5xl lg:text-7xl font-black text-slate-900 mb-8 tracking-tighter">
@@ -240,112 +278,112 @@ export default function Home() {
               {[
                 {
                   title: "Calidad Premium",
-                  icon: "⭐",
+                  icon: Award,
                   desc: "Nuestros tóneres pasan por 12 pruebas de control antes de llegar a ti.",
                   points: [
                     "Certificación ISO 9001",
                     "Negros más profundos",
                     "Cero manchas",
                   ],
-                  color: "from-blue-400/30",
                 },
                 {
                   title: "Máximo Rendimiento",
-                  icon: "🚀",
+                  icon: Gauge,
                   desc: "Diseñados para exprimir cada gota de tinta y gramo de polvo.",
                   points: [
                     "+20% páginas extra",
                     "Carga ultra-rápida",
                     "Ahorro energético",
                   ],
-                  color: "from-cyan-400/30",
                 },
                 {
                   title: "Garantía Total",
-                  icon: "✅",
+                  icon: ShieldCheck,
                   desc: "Si el producto falla, nosotros respondemos. Sin preguntas incómodas.",
                   points: [
                     "Soporte 24/7",
                     "Cambio inmediato",
                     "Protección de equipo",
                   ],
-                  color: "from-emerald-400/30",
                 },
                 {
                   title: "Stock Inmediato",
-                  icon: "📦",
+                  icon: Package,
                   desc: "El inventario más grande del país a tu disposición.",
-                  points: ["Envío en 24h", "200+ Modelos", "Logística propia"],
-                  color: "from-slate-400/30",
+                  points: [
+                    "Envío en 24h",
+                    products.length > 0
+                      ? `${products.length}+ Modelos`
+                      : "Amplio stock",
+                    "Logística propia",
+                  ],
                 },
                 {
                   title: "Precios de Fábrica",
-                  icon: "💰",
+                  icon: Wallet,
                   desc: "Eliminamos intermediarios para darte el mejor costo por página.",
                   points: [
                     "Planes corporativos",
                     "Descuentos por volumen",
                     "Crédito aliado",
                   ],
-                  color: "from-indigo-400/30",
                 },
                 {
                   title: "Compatibilidad",
-                  icon: "🔧",
+                  icon: Wrench,
                   desc: "Integración perfecta. Tu impresora no notará la diferencia.",
                   points: [
                     "Chips de última gen",
                     "Ajuste milimétrico",
                     "Update friendly",
                   ],
-                  color: "from-rose-400/30",
                 },
-              ].map((feature, idx) => (
-                <motion.div
-                  key={idx}
-                  variants={itemVariants}
-                  whileHover={{ y: -15 }}
-                  className="group relative p-12 rounded-[3.5rem] transition-all duration-700 bg-white/5 backdrop-blur-3xl border-t border-l border-white/60 border-b border-r border-white/10 shadow-[25px_25px_50px_rgba(0,0,0,0.03),inset_0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_50px_100px_-20px_rgba(59,130,246,0.15),inset_0_0_30px_rgba(255,255,255,0.4)] overflow-hidden"
-                >
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-                  </div>
-                  <div
-                    className={`absolute -bottom-20 -right-20 w-64 h-64 bg-gradient-to-br ${feature.color} to-transparent blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity duration-700`}
-                  />
-                  <div className="flex items-center gap-6 mb-8 relative z-10">
-                    <div className="w-16 h-16 bg-white/30 backdrop-blur-2xl rounded-2xl flex items-center justify-center text-3xl shadow-[inset_0_0_15px_rgba(255,255,255,0.5)] border border-white/40 group-hover:rotate-[10deg] transition-transform duration-500">
-                      {feature.icon}
+              ].map((feature, idx) => {
+                // Son 6 tarjetas y solo 4 canales: se repiten en el mismo
+                // orden de la tira de control, no hay una correspondencia
+                // real tarjeta-canal que reclamar (a diferencia del código
+                // de producto, que sí encierra su color de tinta real).
+                const canal = (["c", "m", "y", "k"] as const)[idx % 4];
+                return (
+                  <motion.div
+                    key={idx}
+                    variants={itemVariants}
+                    whileHover={{ y: -6 }}
+                    style={{ ["--canal" as string]: `var(--process-${canal})` }}
+                    className="group rounded-xl border border-[var(--canal)]/20 bg-[var(--canal)]/[0.05] p-10 transition-all duration-300 hover:border-[var(--canal)]/45 hover:bg-[var(--canal)]/[0.1] hover:shadow-lg"
+                  >
+                    <div className="flex items-center gap-6 mb-8">
+                      <FeatureIcon icon={feature.icon} canal={canal} />
+                      <h3 className="font-display text-2xl font-black uppercase tracking-tight text-ink [font-stretch:110%]">
+                        {feature.title}
+                      </h3>
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">
-                      {feature.title}
-                    </h3>
-                  </div>
-                  <p className="text-slate-600 leading-relaxed font-medium mb-8 relative z-10">
-                    {feature.desc}
-                  </p>
-                  <ul className="space-y-3 relative z-10">
-                    {feature.points.map((point, pIdx) => (
-                      <li
-                        key={pIdx}
-                        className="flex items-center gap-3 text-sm font-bold text-slate-500 group-hover:text-blue-600 transition-colors"
-                      >
-                        <div className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="absolute bottom-6 right-10 text-xs font-black text-blue-600/20 uppercase tracking-widest group-hover:text-blue-600/40 transition-colors">
-                    ASTA
-                  </div>
-                </motion.div>
-              ))}
+                    <p className="text-slate-600 leading-relaxed font-medium mb-8">
+                      {feature.desc}
+                    </p>
+                    <ul className="space-y-3">
+                      {feature.points.map((point, pIdx) => (
+                        <li
+                          key={pIdx}
+                          className="flex items-center gap-3 text-sm font-bold text-slate-500"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="size-1.5 shrink-0 rounded-full bg-[var(--canal)]"
+                          />
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </div>
         </section>
 
         {/* FEATURED PRODUCTS SECTION - INTUITIVE INTERACTIVE CAROUSEL */}
-        <section className="py-20 bg-gradient-to-b from-white to-[#f3f5f4]">
+        <section className="py-20 bg-gradient-to-b from-white to-surface">
           <div className="container mx-auto px-6 max-w-7xl">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -354,7 +392,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <h2 className="text-4xl lg:text-5xl font-black text-[#0b63cd] mb-4">
+              <h2 className="font-display text-4xl lg:text-5xl font-black uppercase tracking-tight text-ink mb-4 [font-stretch:115%]">
                 Productos Destacados
               </h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -367,7 +405,7 @@ export default function Home() {
                 {[1, 2, 3, 4].map((n) => (
                   <div
                     key={n}
-                    className="bg-white rounded-3xl h-[440px] w-full animate-pulse border border-gray-100 shadow-sm"
+                    className="bg-white rounded-xl h-[440px] w-full animate-pulse border border-gray-100 shadow-sm"
                   />
                 ))}
               </div>
@@ -382,18 +420,18 @@ export default function Home() {
                 <button
                   onClick={() => scroll("left")}
                   aria-label="Anterior producto"
-                  className="absolute left-4 top-[50%] -translate-y-1/2 z-30 bg-white border border-slate-100 p-4 rounded-full shadow-xl text-[#0b63cd] hover:bg-[#0b63cd] hover:text-white transition-all opacity-0 group-hover:opacity-100 hidden md:flex items-center justify-center"
+                  className="absolute left-2 md:left-4 top-[50%] -translate-y-1/2 z-30 flex items-center justify-center rounded-full border border-slate-100 bg-white p-3 md:p-4 text-brand-strong opacity-70 shadow-xl transition-all hover:bg-brand-strong hover:text-white hover:opacity-100 md:opacity-0 md:group-hover:opacity-100"
                 >
-                  <ChevronLeft size={24} strokeWidth={3} />
+                  <ChevronLeft size={22} strokeWidth={2} />
                 </button>
 
                 {/* 🎛️ BOTÓN DERECHO */}
                 <button
                   onClick={() => scroll("right")}
                   aria-label="Siguiente producto"
-                  className="absolute right-4 top-[50%] -translate-y-1/2 z-30 bg-white border border-slate-100 p-4 rounded-full shadow-xl text-[#0b63cd] hover:bg-[#0b63cd] hover:text-white transition-all opacity-0 group-hover:opacity-100 hidden md:flex items-center justify-center"
+                  className="absolute right-2 md:right-4 top-[50%] -translate-y-1/2 z-30 flex items-center justify-center rounded-full border border-slate-100 bg-white p-3 md:p-4 text-brand-strong opacity-70 shadow-xl transition-all hover:bg-brand-strong hover:text-white hover:opacity-100 md:opacity-0 md:group-hover:opacity-100"
                 >
-                  <ChevronRight size={24} strokeWidth={3} />
+                  <ChevronRight size={22} strokeWidth={2} />
                 </button>
 
                 {/* 🔄 CONTENEDOR OPTIMIZADO: Aseguramos ancho completo y comportamiento fluido */}
@@ -412,7 +450,7 @@ export default function Home() {
                       variants={itemVariants}
                       whileHover={{ y: -10 }}
                       /* ⚡ SOLUCIÓN AQUÍ: Usamos min-w y w combinados con porcentajes fijos basados en la cantidad de columnas deseada */
-                      className="bg-white rounded-3xl overflow-hidden shadow-[0_10px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(11,99,205,0.08)] transition-all duration-300 border border-gray-100/80 flex flex-col h-[460px] w-[280px] min-w-[280px] md:w-[calc(50%-12px)] md:min-w-[calc(50%-12px)] lg:w-[calc(25%-18px)] lg:min-w-[calc(25%-18px)] flex-shrink-0 snap-start"
+                      className="bg-white rounded-xl overflow-hidden shadow-[0_10px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(11,99,205,0.08)] transition-all duration-300 border border-gray-100/80 flex flex-col h-[460px] w-[280px] min-w-[280px] md:w-[calc(50%-12px)] md:min-w-[calc(50%-12px)] lg:w-[calc(25%-18px)] lg:min-w-[calc(25%-18px)] flex-shrink-0 snap-start"
                     >
                       {/* Contenedor de la Imagen */}
                       <div className="relative h-48 w-full bg-white flex items-center justify-center p-6 flex-shrink-0">
@@ -426,6 +464,7 @@ export default function Home() {
                           }
                           alt={product.name}
                           fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                           className="object-contain p-4 hover:scale-105 transition-transform duration-300"
                           unoptimized={product.image.startsWith("data:")}
                         />
@@ -434,10 +473,10 @@ export default function Home() {
                       {/* Cuerpo de Información */}
                       <div className="p-6 flex-1 flex flex-col justify-between bg-white rounded-b-3xl">
                         <div className="space-y-2">
-                          <p className="text-[10px] text-[#44abff] font-bold uppercase tracking-wider">
+                          <p className="text-[10px] text-brand font-bold uppercase tracking-wider">
                             {product.category || "Consumibles"}
                           </p>
-                          <h3 className="text-sm font-bold text-[#0b63cd] line-clamp-2 leading-snug min-h-[40px]">
+                          <h3 className="text-sm font-bold text-brand-strong line-clamp-2 leading-snug min-h-[40px]">
                             {product.name}
                           </h3>
                           <p className="text-gray-400 text-xs line-clamp-2 leading-relaxed">
@@ -454,7 +493,7 @@ export default function Home() {
                             <motion.span
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
-                              className="block bg-[#44abff] text-white w-full py-3 rounded-xl text-xs font-bold hover:bg-[#0b63cd] transition-colors shadow-sm text-center cursor-pointer"
+                              className="block bg-brand-strong text-white w-full py-3 rounded-xl text-xs font-bold hover:bg-brand-navy transition-colors shadow-sm text-center cursor-pointer"
                             >
                               Ver Detalles
                             </motion.span>
@@ -478,18 +517,20 @@ export default function Home() {
                 href="/catalog"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="inline-block px-10 py-4 bg-[#0b63cd] text-white rounded-lg font-bold text-lg hover:bg-[#0b2d4d] transition-colors"
+                className="inline-block px-10 py-4 bg-brand-strong text-white rounded-lg font-bold text-lg hover:bg-brand-navy transition-colors"
               >
-                Ver Todos los Productos (200+)
+                {`Ver Todos los Productos (${products.length > 0 ? `${products.length}+` : "···"})`}
               </motion.a>
             </motion.div>
           </div>
         </section>
 
+        <ControlStrip />
+
         {/* BRANDS SECTION */}
         <section className="py-24 bg-white border-y border-slate-50 overflow-hidden">
           <div className="container mx-auto px-6 mb-16">
-            <h2 className="text-center text-xs font-black text-slate-400 uppercase tracking-[0.4em] mb-4">
+            <h2 className="mb-4 text-center font-mono text-xs uppercase tracking-[0.2em] text-slate-500">
               Marcas Compatibles
             </h2>
           </div>
@@ -536,7 +577,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-center mb-24"
             >
-              <h2 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.6em] mb-4">
+              <h2 className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-brand-strong">
                 Ecosistema Logístico
               </h2>
               <h3 className="text-5xl lg:text-7xl font-black text-slate-900 mb-6 tracking-tighter leading-none">
@@ -550,12 +591,14 @@ export default function Home() {
             </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
+              {/* La linea guia recorre los mismos tres canales que las
+                  tarjetas: es la tira de control estirada en horizontal. */}
               <div className="hidden lg:block absolute top-[40%] left-0 w-full h-[2px] bg-slate-100 z-0">
                 <motion.div
                   initial={{ width: 0 }}
                   whileInView={{ width: "100%" }}
                   transition={{ duration: 2, ease: "easeInOut" }}
-                  className="h-full bg-gradient-to-r from-blue-600 via-sky-400 to-yellow-400"
+                  className="h-full bg-gradient-to-r from-[var(--process-c)] via-[var(--process-m)] to-[var(--process-y)]"
                 />
               </div>
 
@@ -564,37 +607,33 @@ export default function Home() {
                   step: "01",
                   title: "Selecciona",
                   description:
-                    "Explora nuestro catálogo elite y elige la ingeniería de precisión que tu impresora merece.",
-                  icon: <Search className="w-8 h-8" />,
-                  color: "from-blue-500 to-blue-700",
-                  accent: "bg-blue-600",
+                    "Explora nuestro catalogo elite y elige la ingenieria de precision que tu impresora merece.",
+                  icon: Search,
+                  canal: "c",
                 },
                 {
                   step: "02",
                   title: "Consulta",
                   description:
-                    "Valida especificaciones y compatibilidad total con el apoyo de nuestros expertos técnicos.",
-                  icon: <FileText className="w-8 h-8" />,
-                  color: "from-sky-400 to-sky-600",
-                  accent: "bg-sky-500",
+                    "Valida especificaciones y compatibilidad total con el apoyo de nuestros expertos tecnicos.",
+                  icon: FileText,
+                  canal: "m",
                 },
                 {
                   step: "03",
                   title: "Ordena",
                   description:
-                    "Gestión de pedido ágil con logística prioritaria para que tu flujo de trabajo nunca se detenga.",
-                  icon: <ShoppingCart className="w-8 h-8" />,
-                  color: "from-yellow-400 to-yellow-600",
-                  accent: "bg-yellow-500",
+                    "Gestion de pedido agil con logistica prioritaria para que tu flujo de trabajo nunca se detenga.",
+                  icon: ShoppingCart,
+                  canal: "y",
                 },
                 {
                   step: "04",
                   title: "Disfruta",
                   description:
-                    "Recibe calidad certificada ASTA y experimenta la nitidez superior de la marca líder.",
-                  icon: <ShieldCheck className="w-8 h-8" />,
-                  color: "from-blue-600 to-sky-500",
-                  accent: "bg-blue-600",
+                    "Recibe calidad certificada ASTA y experimenta la nitidez superior de la marca lider.",
+                  icon: ShieldCheck,
+                  canal: "k",
                 },
               ].map((item, idx) => (
                 <motion.div
@@ -605,29 +644,38 @@ export default function Home() {
                   viewport={{ once: true }}
                   className="group relative z-10"
                 >
-                  <div className="h-full p-10 rounded-[3rem] bg-slate-50/50 border border-slate-100 backdrop-blur-md transition-all duration-500 hover:bg-white hover:border-blue-200 hover:-translate-y-4 shadow-sm hover:shadow-[0_40px_80px_-20px_rgba(11,99,205,0.15)]">
+                  {/* El color de canal entra por una variable CSS, no por una
+                      clase armada con template string: Tailwind escanea el
+                      codigo en build y una clase como bg-process-${canal}
+                      no existe tal cual en ningun archivo, asi que desaparece
+                      del CSS compilado. Con la variable, las clases de abajo
+                      (bg-[var(--canal)]/8, etc.) son literales fijos y el
+                      valor que toma cada tarjeta llega por style. */}
+                  <div
+                    style={{
+                      ["--canal" as string]: `var(--process-${item.canal})`,
+                    }}
+                    className="h-full rounded-[3rem] border border-[var(--canal)]/20 bg-[var(--canal)]/[0.06] p-10 backdrop-blur-md transition-all duration-500 hover:-translate-y-4 hover:border-[var(--canal)]/45 hover:bg-[var(--canal)]/[0.12] hover:shadow-[0_40px_80px_-20px_var(--canal)]"
+                  >
                     <div className="flex justify-between items-start mb-10">
-                      <div
-                        className={`p-4 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500`}
-                      >
-                        {item.icon}
-                      </div>
-                      <span
-                        className="text-5xl font-black transition-colors duration-500 select-none group-hover:opacity-50"
-                        style={{ color: "#cdcecf" }}
-                      >
+                      <FeatureIcon
+                        icon={item.icon}
+                        canal={item.canal as "c" | "m" | "y" | "k"}
+                      />
+                      <span className="select-none font-display text-5xl font-black leading-none text-slate-200 transition-colors duration-500 group-hover:text-slate-300 [font-stretch:125%]">
                         {item.step}
                       </span>
                     </div>
-                    <h4 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">
+                    <h4 className="mb-4 font-display text-2xl font-black uppercase tracking-tight text-ink [font-stretch:110%]">
                       {item.title}
                     </h4>
                     <p className="text-slate-500 leading-relaxed font-medium text-sm group-hover:text-slate-600 transition-colors">
                       {item.description}
                     </p>
-                    <div className="mt-8 flex items-center gap-2">
-                      <div
-                        className={`w-8 h-1.5 ${item.accent} rounded-full group-hover:w-full transition-all duration-700 ease-in-out`}
+                    <div className="mt-8">
+                      <span
+                        aria-hidden="true"
+                        className="block h-1.5 w-10 bg-[var(--canal)] transition-all duration-700 ease-in-out group-hover:w-full"
                       />
                     </div>
                   </div>
@@ -638,7 +686,15 @@ export default function Home() {
         </section>
 
         {/* TESTIMONIALS SECTION */}
-        <section className="py-20 bg-[#f3f5f4]">
+        {/* En tinta a sangre: rompe la seguidilla de secciones claras y le da
+            peso al testimonio, que es lo que más convence a un comprador.
+            Mismo brillo radial que las cabeceras (--brand-strong hacia
+            --ink), con el foco centrado arriba en vez de a la izquierda
+            porque aquí el título y la bajada están centrados, no alineados
+            a un lado. Las tarjetas de abajo quedan en bg-ink-soft plano,
+            igual que el input de las cabeceras: una capa "elevada" sobre
+            el fondo con brillo, no algo que necesite su propio degradado. */}
+        <section className="bg-[radial-gradient(140%_140%_at_50%_10%,var(--brand-strong)_0%,var(--ink)_100%)] py-24">
           <div className="container mx-auto px-6 max-w-7xl">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -647,11 +703,13 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-center mb-16"
             >
-              <h2 className="text-4xl lg:text-5xl font-black text-[#0b63cd] mb-4">
-                Lo Que Dicen Nuestros Clientes
+              <ControlPatches className="mb-6 justify-center" />
+              <h2 className="font-display text-4xl font-black uppercase tracking-tight text-white lg:text-5xl [font-stretch:115%]">
+                Quien ya imprime con ASTA
               </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Descubre por qué miles de clientes confían en ASTA
+              <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-300">
+                Centros de copiado, imprentas y distribuidores que repiten lote
+                tras lote.
               </p>
             </motion.div>
 
@@ -688,23 +746,32 @@ export default function Home() {
                 <motion.div
                   key={idx}
                   variants={itemVariants}
-                  className="bg-white rounded-lg p-8 shadow-md border border-gray-100"
+                  className="rounded-xl border border-white/10 bg-ink-soft p-8"
                 >
-                  <div className="flex gap-1 mb-4">
+                  <div
+                    className="mb-5 flex gap-1"
+                    aria-label={`${testimonial.rating} de 5 estrellas`}
+                  >
                     {Array.from({ length: testimonial.rating }).map((_, i) => (
-                      <span key={i} className="text-yellow-400 text-xl">
-                        ★
-                      </span>
+                      <Star
+                        key={i}
+                        aria-hidden="true"
+                        className="size-4"
+                        style={{
+                          color: "var(--process-y)",
+                          fill: "var(--process-y)",
+                        }}
+                      />
                     ))}
                   </div>
-                  <p className="text-gray-700 mb-6 italic">
+                  <p className="mb-6 leading-relaxed text-slate-200">
                     "{testimonial.comment}"
                   </p>
                   <div>
-                    <p className="font-bold text-[#0b63cd]">
+                    <p className="font-display font-bold text-white">
                       {testimonial.name}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="font-mono text-xs uppercase tracking-wider text-slate-400">
                       {testimonial.company}
                     </p>
                   </div>
@@ -734,7 +801,7 @@ export default function Home() {
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
                     Centro de Ayuda
                   </div>
-                  <h2 className="text-4xl lg:text-6xl font-black text-slate-900 mb-6 tracking-tighter leading-none">
+                  <h2 className="mb-6 font-display text-4xl font-black uppercase leading-none tracking-tight text-ink lg:text-6xl [font-stretch:115%]">
                     Preguntas <span className="text-blue-600">Frecuentes.</span>
                   </h2>
                   <p className="text-lg text-slate-500 font-medium max-w-2xl mx-auto lg:mx-0">
@@ -826,8 +893,10 @@ export default function Home() {
           </div>
         </section>
 
+        <ControlStrip />
+
         {/* MASCOT SECTION */}
-        <section className="py-20 bg-gradient-to-r from-[#44abff] to-[#0b63cd]">
+        <section className="py-20 bg-gradient-to-r from-brand to-brand-strong">
           <div className="container mx-auto px-6 max-w-7xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <motion.div
@@ -836,7 +905,7 @@ export default function Home() {
                 transition={{ duration: 0.8 }}
                 viewport={{ once: true }}
               >
-                <h2 className="text-4xl lg:text-5xl font-black text-white mb-6">
+                <h2 className="mb-6 font-display text-4xl font-black uppercase tracking-tight text-white lg:text-5xl [font-stretch:115%]">
                   Conoce a Nuestro Amigo Panda
                 </h2>
                 <p className="text-xl text-white/90 mb-8">
@@ -846,10 +915,19 @@ export default function Home() {
                 </p>
                 <div className="space-y-4">
                   {[
-                    "🎯 Experto en soluciones de impresión",
-                    "💡 Siempre trae las mejores ideas",
-                    "🤝 Tu socio de confianza",
-                    "🌟 Garantía ASTA en cada producto",
+                    {
+                      icon: Crosshair,
+                      texto: "Experto en soluciones de impresión",
+                    },
+                    {
+                      icon: Lightbulb,
+                      texto: "Siempre trae las mejores ideas",
+                    },
+                    { icon: Handshake, texto: "Tu socio de confianza" },
+                    {
+                      icon: ShieldCheck,
+                      texto: "Garantía ASTA en cada producto",
+                    },
                   ].map((item, idx) => (
                     <motion.div
                       key={idx}
@@ -859,8 +937,8 @@ export default function Home() {
                       viewport={{ once: true }}
                       className="flex items-center gap-3 text-white"
                     >
-                      <span className="text-2xl">{item.split(" ")[0]}</span>
-                      <span>{item.substring(3)}</span>
+                      <FeatureIcon icon={item.icon} tono="oscuro" tamano="sm" />
+                      <span>{item.texto}</span>
                     </motion.div>
                   ))}
                 </div>
@@ -888,6 +966,8 @@ export default function Home() {
         </section>
 
         {/* CTA SECTION */}
+        {/* Mismo brillo radial en tinta que testimonios y las cabeceras,
+            foco centrado arriba porque el título también está centrado. */}
         <section className="py-20 bg-white">
           <div className="container mx-auto px-6 max-w-4xl">
             <motion.div
@@ -895,9 +975,9 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
-              className="text-center bg-gradient-to-r from-[#44abff] to-[#0b63cd] rounded-2xl p-12 text-white"
+              className="rounded-xl bg-[radial-gradient(140%_140%_at_50%_15%,var(--brand-strong)_0%,var(--ink)_100%)] p-12 text-center text-white"
             >
-              <h2 className="text-4xl lg:text-5xl font-black mb-6">
+              <h2 className="mb-6 font-display text-4xl font-black uppercase tracking-tight lg:text-5xl [font-stretch:115%]">
                 ¿Listo para Optimizar tus Impresiones?
               </h2>
               <p className="text-xl mb-8 max-w-2xl mx-auto">
@@ -910,7 +990,7 @@ export default function Home() {
                   href="/catalog"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-10 py-4 bg-white text-[#0b63cd] rounded-lg font-bold text-lg hover:bg-gray-100 transition-colors inline-block"
+                  className="px-10 py-4 bg-white text-brand-strong rounded-lg font-bold text-lg hover:bg-gray-100 transition-colors inline-block"
                 >
                   Ver Todos los Productos
                 </motion.a>
@@ -925,10 +1005,37 @@ export default function Home() {
               </div>
 
               <div className="mt-8 pt-8 border-t border-white/20">
-                <p className="text-white/80">
-                  📧 info@asta.com | 📞 +58 (0) 212 XXX-XXXX | 🌐
-                  www.asta.com.ve
-                </p>
+                <ul
+                  role="list"
+                  className="flex flex-wrap items-center gap-x-8 gap-y-3 text-white/80"
+                >
+                  <li className="flex items-center gap-2">
+                    <Mail
+                      aria-hidden="true"
+                      strokeWidth={1.5}
+                      className="size-4 shrink-0"
+                    />
+                    <a href="mailto:info@asta.com" className="hover:underline">
+                      info@asta.com
+                    </a>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Phone
+                      aria-hidden="true"
+                      strokeWidth={1.5}
+                      className="size-4 shrink-0"
+                    />
+                    <span>+58 (0) 212 XXX-XXXX</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Globe
+                      aria-hidden="true"
+                      strokeWidth={1.5}
+                      className="size-4 shrink-0"
+                    />
+                    <span>www.asta.com.ve</span>
+                  </li>
+                </ul>
               </div>
             </motion.div>
           </div>
@@ -937,100 +1044,59 @@ export default function Home() {
         <Chatbot />
 
         {/* FOOTER */}
-        <footer className="bg-[#0b63cd] text-white py-16">
-          <div className="container mx-auto px-6 max-w-7xl">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-              <div>
-                <img
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ASTA%20LOGO-vtQAMg0Q2u2aytIUDPgrmSZqP65VBq.png"
+        {/* Foco arriba-izquierda como las cabeceras: el contenido del pie
+            (logo, columnas) empieza alineado a ese lado, no centrado. */}
+        <ControlStrip alto="h-1.5" />
+        <footer className="bg-[radial-gradient(140%_140%_at_12%_15%,var(--brand-strong)_0%,var(--ink)_100%)] py-14 text-white">
+          <div className="container mx-auto max-w-7xl px-6">
+            <div className="flex flex-col items-start justify-between gap-10 md:flex-row">
+              <div className="max-w-sm">
+                <Image
+                  src="/ASTA LOGO.png"
                   alt="ASTA"
-                  className="h-12 w-auto mb-4 filter brightness-0 invert"
+                  width={140}
+                  height={40}
+                  className="mb-4 h-9 w-auto object-contain brightness-0 invert"
                 />
-                <p className="text-white/80">
-                  La marca número #1 en consumibles para impresoras desde 1995.
+                <p className="text-slate-300">
+                  Tóner, tintas, drums y chips que rinden lo que dice la caja.
+                  Distribuyendo en Venezuela desde 1995.
                 </p>
               </div>
-              <div>
-                <h4 className="font-bold mb-4">Productos</h4>
-                <ul className="space-y-2 text-white/80">
+
+              <nav aria-label="Navegación del pie de página">
+                <h4 className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-slate-300">
+                  Navegación
+                </h4>
+                <ul className="flex flex-col gap-3 text-slate-300 sm:flex-row sm:gap-8">
                   <li>
-                    <a href="#" className="hover:text-white">
-                      Tóneres
-                    </a>
+                    <Link href="/" className="hover:text-white">
+                      Inicio
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="hover:text-white">
-                      Tintas
-                    </a>
+                    <Link href="/catalog" className="hover:text-white">
+                      Catálogo
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="hover:text-white">
-                      Accesorios
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white">
-                      Ofertas
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-bold mb-4">Empresa</h4>
-                <ul className="space-y-2 text-white/80">
-                  <li>
-                    <a href="#" className="hover:text-white">
+                    <Link href="/about" className="hover:text-white">
                       Sobre Nosotros
-                    </a>
+                    </Link>
                   </li>
                   <li>
-                    <a href="#" className="hover:text-white">
-                      Distribuidor
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white">
+                    <Link href="/contact" className="hover:text-white">
                       Contacto
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white">
-                      Blog
-                    </a>
+                    </Link>
                   </li>
                 </ul>
-              </div>
-              <div>
-                <h4 className="font-bold mb-4">Síguenos</h4>
-                <ul className="space-y-2 text-white/80">
-                  <li>
-                    <a href="#" className="hover:text-white">
-                      Facebook
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white">
-                      Instagram
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white">
-                      LinkedIn
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#" className="hover:text-white">
-                      YouTube
-                    </a>
-                  </li>
-                </ul>
-              </div>
+              </nav>
             </div>
 
-            <div className="border-t border-white/20 pt-8 text-center text-white/80">
+            <div className="mt-10 border-t border-white/10 pt-8 text-center text-sm text-slate-300">
               <p>
-                &copy; 2026 ASTA - Todos los derechos reservados | Política de
-                Privacidad | Términos de Servicio
+                &copy; {new Date().getFullYear()} ASTA. Todos los derechos
+                reservados.
               </p>
             </div>
           </div>

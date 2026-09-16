@@ -108,7 +108,7 @@ const ProductCard = ({
         href={`${PRODUCT_BASE_URL}${encodeURIComponent(code)}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="self-start text-xs font-bold text-white bg-[#0b63cd] hover:bg-[#0950a8] px-3 py-1.5 rounded-lg transition-colors"
+        className="self-start text-xs font-bold text-white bg-brand-strong hover:bg-brand-darker px-3 py-1.5 rounded-lg transition-colors"
       >
         Ver más
       </a>
@@ -278,13 +278,14 @@ export const Chatbot = () => {
             className="w-full h-full sm:w-[450px] sm:h-[600px] bg-white rounded-none sm:rounded-[2.5rem] shadow-[0_20px_50px_rgba(11,99,205,0.2)] border border-slate-100 overflow-hidden flex flex-col sm:mb-6"
           >
             {/* Header del Chat */}
-            <div className="p-6 bg-gradient-to-r from-[#000000] to-[#0b63cd] text-white flex items-center justify-between flex-shrink-0">
+            <div className="p-6 bg-gradient-to-r from-black to-brand-strong text-white flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="relative w-12 h-12 bg-white rounded-full overflow-hidden border-2 border-white/20">
                   <Image
                     src="/Chatbot2.jpeg"
                     alt="ASTA Bot"
                     fill
+                    sizes="48px"
                     className="object-cover"
                   />
                 </div>
@@ -330,7 +331,7 @@ export const Chatbot = () => {
                   <div
                     className={`max-w-[85%] p-4 rounded-2xl text-sm font-medium ${
                       msg.sender === "user"
-                        ? "bg-[#0b63cd] text-white rounded-tr-none shadow-lg shadow-blue-900/10"
+                        ? "bg-brand-strong text-white rounded-tr-none shadow-lg shadow-blue-900/10"
                         : "bg-white text-slate-700 rounded-tl-none border border-slate-100 shadow-sm"
                     }`}
                   >
@@ -360,12 +361,12 @@ export const Chatbot = () => {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
                   placeholder="Escribe tu duda aquí..."
-                  className="w-full pl-4 pr-12 py-3 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-[#0b63cd] transition-all outline-none"
+                  className="w-full pl-4 pr-12 py-3 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-brand-strong transition-all outline-none"
                 />
                 <button
                   onClick={handleSend}
                   disabled={isLoading}
-                  className="absolute right-2 p-2 text-[#0b63cd] hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="absolute right-2 p-2 text-brand-strong hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Send size={18} />
                 </button>
@@ -383,16 +384,20 @@ export const Chatbot = () => {
         evitando superposiciones extrañas debajo del chat completo.
       */}
       <motion.button
+        type="button"
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={isOpen ? "Cerrar chat de ayuda" : "Abrir chat de ayuda"}
+        aria-expanded={isOpen}
         className={`relative w-24 h-24 bg-white rounded-full shadow-[0_15px_40px_rgba(11,99,205,0.4)] items-center justify-center overflow-hidden border-4 border-blue-50 group transition-all ${
           isOpen ? "hidden sm:flex" : "flex"
         }`}
       >
         <Image
           src="/Chatbot2.jpeg"
-          alt="Abrir Chat"
+          alt=""
           fill
+          sizes="96px"
           className="object-cover p-1 transition-transform duration-300"
           priority
         />

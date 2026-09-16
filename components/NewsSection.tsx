@@ -1,31 +1,36 @@
-'use client';
+"use client";
+import { FeatureIcon } from "@/components/FeatureIcon";
+import { Handshake, Newspaper, Trophy } from "lucide-react";
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 const NEWS = [
   {
     id: 1,
-    title: 'Nuevos Tóneres de Alto Rendimiento',
-    excerpt: 'ASTA lanza su nueva línea de tóneres con rendimiento mejorado hasta 20% más páginas.',
-    date: 'Abril 2024',
-    image: '📄',
-    category: 'Productos',
+    title: "Nuevos Tóneres de Alto Rendimiento",
+    excerpt:
+      "ASTA lanza su nueva línea de tóneres con rendimiento mejorado hasta 20% más páginas.",
+    date: "Abril 2024",
+    image: Newspaper,
+    category: "Productos",
   },
   {
     id: 2,
-    title: 'ASTA es #1 en Venezuela',
-    excerpt: 'Según el último estudio de mercado, ASTA mantiene el liderazgo en consumibles para impresoras.',
-    date: 'Marzo 2024',
-    image: '🏆',
-    category: 'Logros',
+    title: "ASTA es #1 en Venezuela",
+    excerpt:
+      "Según el último estudio de mercado, ASTA mantiene el liderazgo en consumibles para impresoras.",
+    date: "Marzo 2024",
+    image: Trophy,
+    category: "Logros",
   },
   {
     id: 3,
-    title: 'Programa de Distribuidor Premium',
-    excerpt: 'Únete a nuestro programa de distribuidores y accede a beneficios exclusivos y soporte dedicado.',
-    date: 'Febrero 2024',
-    image: '🤝',
-    category: 'Programa',
+    title: "Programa de Distribuidor Premium",
+    excerpt:
+      "Únete a nuestro programa de distribuidores y accede a beneficios exclusivos y soporte dedicado.",
+    date: "Febrero 2024",
+    image: Handshake,
+    category: "Programa",
   },
 ];
 
@@ -40,7 +45,7 @@ export function NewsSection() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-5xl font-black text-[#0b63cd] mb-4">
+          <h2 className="text-5xl font-black text-brand-strong mb-4">
             Últimas Noticias
           </h2>
           <p className="text-gray-700 text-lg max-w-2xl mx-auto">
@@ -60,22 +65,25 @@ export function NewsSection() {
               whileHover={{ translateY: -5 }}
             >
               {/* Image */}
-              <div className="h-40 bg-gradient-to-br from-[#44abff] to-[#0b63cd] flex items-center justify-center text-6xl overflow-hidden">
-                <motion.span whileHover={{ scale: 1.2 }} className="inline-block">
-                  {article.image}
+              <div className="h-40 bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center text-6xl overflow-hidden">
+                <motion.span
+                  whileHover={{ scale: 1.2 }}
+                  className="inline-block"
+                >
+                  <FeatureIcon icon={article.image} />
                 </motion.span>
               </div>
 
               {/* Content */}
               <div className="p-6">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-[#0b63cd] uppercase tracking-wider bg-blue-50 px-3 py-1 rounded-full">
+                  <span className="text-xs font-bold text-brand-strong uppercase tracking-wider bg-blue-50 px-3 py-1 rounded-full">
                     {article.category}
                   </span>
                   <span className="text-xs text-gray-500">{article.date}</span>
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#0b63cd] transition-colors line-clamp-2">
+                <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-brand-strong transition-colors line-clamp-2">
                   {article.title}
                 </h3>
 
@@ -84,8 +92,8 @@ export function NewsSection() {
                 </p>
 
                 <motion.div
-                  className="flex items-center text-[#0b63cd] font-semibold text-sm"
-                  whileHover={{ gap: '8px' }}
+                  className="flex items-center text-brand-strong font-semibold text-sm"
+                  whileHover={{ gap: "8px" }}
                 >
                   Leer más
                   <motion.svg
@@ -96,7 +104,12 @@ export function NewsSection() {
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </motion.svg>
                 </motion.div>
               </div>

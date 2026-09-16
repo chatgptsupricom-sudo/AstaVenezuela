@@ -23,7 +23,7 @@ export function ProductCard({ name, code, category, image, index }: ProductCardP
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       {/* Image Container */}
-      <div className="relative h-48 bg-gradient-to-br from-[#44abff] to-[#0b63cd] flex items-center justify-center overflow-hidden">
+      <div className="relative h-48 bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center overflow-hidden">
         <motion.div
           whileHover={{ scale: 1.1 }}
           className="text-6xl"
@@ -34,10 +34,10 @@ export function ProductCard({ name, code, category, image, index }: ProductCardP
 
       {/* Content */}
       <div className="relative p-6 z-10">
-        <div className="text-xs font-semibold text-[#0b63cd] uppercase tracking-wider mb-2">
+        <div className="text-xs font-semibold text-brand-strong uppercase tracking-wider mb-2">
           {category}
         </div>
-        <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-[#0b63cd] transition-colors">
+        <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-brand-strong transition-colors">
           {name}
         </h3>
         <p className="text-sm text-gray-600 font-mono">{code}</p>
@@ -46,7 +46,7 @@ export function ProductCard({ name, code, category, image, index }: ProductCardP
         <motion.div
           initial={{ opacity: 0 }}
           whileHover={{ opacity: 1 }}
-          className="mt-4 flex items-center text-[#0b63cd] font-semibold text-sm"
+          className="mt-4 flex items-center text-brand-strong font-semibold text-sm"
         >
           Ver detalles
           <motion.svg
@@ -63,7 +63,7 @@ export function ProductCard({ name, code, category, image, index }: ProductCardP
       </div>
 
       {/* Bottom accent line */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#44abff] via-[#0b63cd] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-brand via-brand-strong to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
     </motion.div>
   );
 }

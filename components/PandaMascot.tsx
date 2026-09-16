@@ -1,5 +1,8 @@
 'use client';
 
+// Los colores de abajo son materiales de three.js (WebGL), no CSS: no pueden
+// usar var(--brand-*). Son la unica copia manual de la paleta que queda —
+// si cambia --brand-strong o --brand-navy en app/globals.css, actualizar aqui.
 import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useScroll } from 'framer-motion';

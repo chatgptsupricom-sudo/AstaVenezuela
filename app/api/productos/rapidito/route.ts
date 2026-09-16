@@ -39,15 +39,16 @@ export async function GET() {
           ["categ_id", "=", 2614],
         ];
 
-        // ⚡ OPTIMIZACIÓN 1: Cambiamos 'image_1920' por 'image_128' (miniatura de Odoo)
-        // Esto reduce el peso del payload JSON en más de un 95%.
+        // Las imágenes NO viajan en este JSON. Antes iban en base64 y la
+        // respuesta pesaba 753 KB: no cacheable, sin optimizar y bloqueando
+        // el render. Ahora cada producto expone una URL a /api/image/product,
+        // que el navegador cachea y next/image redimensiona por su cuenta.
         const fields = [
           "id",
           "name",
           "default_code",
           "list_price",
           "categ_id",
-          "image_128",
           "description_sale",
         ];
 
@@ -60,7 +61,8 @@ export async function GET() {
             "product.template",
             "search_read",
             [searchDomain],
-            { fields: fields, limit: 150 },
+            // 150 dejaba fuera 12 de los 162 productos que casan con el filtro.
+            { fields: fields, limit: 500 },
           ],
           (err, products) => {
             if (err) {
@@ -79,10 +81,13 @@ export async function GET() {
                 : "Sin Categoría",
               price: p.list_price || 0,
               stock: 0,
-              // ⚡ OPTIMIZACIÓN 2: Usamos el Base64 ligero de 128px o un fallback estático
-              image: p.image_128
-                ? `data:image/jpeg;base64,${p.image_128}`
-                : "/ASTA LOGO.png",
+              // La ruta devuelve el logo si el producto no tiene foto, así que
+              // aquí no hace falta comprobar nada.
+              // Sin query string a propósito: next/image exige declarar en
+              // images.localPatterns cualquier URL local con parámetros, y no
+              // merece la pena acoplar la config a un valor exacto. La ruta
+              // sirve 256px por defecto.
+              image: `/api/image/product/${p.id}`,
               code: p.default_code || "",
               description: p.description_sale || "Sin descripción.",
             }));

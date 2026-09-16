@@ -1,31 +1,36 @@
-'use client';
+"use client";
+import { FeatureIcon } from "@/components/FeatureIcon";
+import { FileText, Search, ShieldCheck, Truck } from "lucide-react";
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 const STEPS = [
   {
-    number: '01',
-    title: 'Selecciona tu Producto',
-    description: 'Elige entre tóneres, tintas o cartuchos compatibles con tu impresora.',
-    icon: '🎯',
+    number: "01",
+    title: "Selecciona tu Producto",
+    description:
+      "Elige entre tóneres, tintas o cartuchos compatibles con tu impresora.",
+    icon: Search,
   },
   {
-    number: '02',
-    title: 'Garantía de Calidad',
-    description: 'Todos nuestros productos cumplen estrictos estándares de calidad ASTA.',
-    icon: '✓',
+    number: "02",
+    title: "Garantía de Calidad",
+    description:
+      "Todos nuestros productos cumplen estrictos estándares de calidad ASTA.",
+    icon: FileText,
   },
   {
-    number: '03',
-    title: 'Rendimiento Máximo',
-    description: 'Obtén resultados profesionales con máxima eficiencia de costo.',
-    icon: '⚡',
+    number: "03",
+    title: "Rendimiento Máximo",
+    description:
+      "Obtén resultados profesionales con máxima eficiencia de costo.",
+    icon: Truck,
   },
   {
-    number: '04',
-    title: 'Soporte Confiable',
-    description: 'Acceso a asesoramiento experto cuando lo necesites.',
-    icon: '🤝',
+    number: "04",
+    title: "Soporte Confiable",
+    description: "Acceso a asesoramiento experto cuando lo necesites.",
+    icon: ShieldCheck,
   },
 ];
 
@@ -40,17 +45,18 @@ export function HowItWorks() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-5xl font-black text-[#0b63cd] mb-4">
+          <h2 className="text-5xl font-black text-brand-strong mb-4">
             Cómo funciona
           </h2>
           <p className="text-gray-700 text-lg max-w-2xl mx-auto">
-            Un proceso simple para obtener los mejores consumibles para tu impresora.
+            Un proceso simple para obtener los mejores consumibles para tu
+            impresora.
           </p>
         </motion.div>
 
         <div className="relative">
           {/* Connecting Line */}
-          <div className="hidden md:block absolute top-24 left-0 right-0 h-1 bg-gradient-to-r from-[#44abff] via-[#0b63cd] to-[#44abff] opacity-30" />
+          <div className="hidden md:block absolute top-24 left-0 right-0 h-1 bg-gradient-to-r from-brand via-brand-strong to-brand opacity-30" />
 
           {/* Steps Grid */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -67,7 +73,7 @@ export function HowItWorks() {
                 <div className="flex items-center justify-center mb-6">
                   <motion.div
                     whileHover={{ scale: 1.1 }}
-                    className="relative w-20 h-20 rounded-full bg-gradient-to-br from-[#44abff] to-[#0b63cd] flex items-center justify-center text-white font-black text-2xl shadow-lg"
+                    className="relative w-20 h-20 rounded-full bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center text-white font-black text-2xl shadow-lg"
                   >
                     {step.number}
                     <div className="absolute inset-0 rounded-full border-2 border-white opacity-30" />
@@ -76,7 +82,7 @@ export function HowItWorks() {
 
                 {/* Content */}
                 <div className="text-center">
-                  <div className="text-4xl mb-3">{step.icon}</div>
+                  <FeatureIcon icon={step.icon} />
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
                     {step.title}
                   </h3>
@@ -90,7 +96,7 @@ export function HowItWorks() {
                   <motion.div
                     animate={{ x: [0, 5, 0] }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="hidden md:block absolute -right-14 top-24 text-[#0b63cd] text-2xl"
+                    className="hidden md:block absolute -right-14 top-24 text-brand-strong text-2xl"
                   >
                     →
                   </motion.div>

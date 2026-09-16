@@ -1,10 +1,18 @@
 "use client";
 
+import { ControlPatches, ControlStrip } from "@/components/ControlStrip";
 import { Navbar } from "@/components/Navbar";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link"; // Asegúrate de importar esto
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Fragment, useEffect, useMemo, useState } from "react";
+
+// El stagger solo tiene sentido en las tarjetas que ya están en pantalla.
+// Sin tope, con 150 productos la última aparecía a los 7,5 s (150 * 0.05).
+const MAX_TARJETAS_ESCALONADAS = 12;
+
+// Montar 162 tarjetas de golpe es trabajo de layout que nadie llega a ver.
+const POR_PAGINA = 24;
 
 // Definimos el tipo de producto
 interface Product {
@@ -15,7 +23,108 @@ interface Product {
   stock: number;
   image: string;
   code: string;
-  description: string; // 🔴 Nueva propiedad
+  description: string;
+}
+
+function Paginacion({
+  paginaActual,
+  totalPaginas,
+  onCambio,
+}: {
+  paginaActual: number;
+  totalPaginas: number;
+  onCambio: (n: number) => void;
+}) {
+  if (totalPaginas <= 1) return null;
+
+  // Ventana deslizante de 5 páginas alrededor de la actual: con 7 páginas
+  // caben todas, pero esto aguanta si el catálogo crece.
+  const inicio = Math.max(1, Math.min(paginaActual - 2, totalPaginas - 4));
+  const fin = Math.min(totalPaginas, inicio + 4);
+  const paginas = [];
+  for (let i = inicio; i <= fin; i++) paginas.push(i);
+
+  const base =
+    "min-w-11 h-11 px-3 rounded-lg font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
+
+  return (
+    <nav aria-label="Paginación de productos" className="mt-10">
+      <ul
+        role="list"
+        className="flex items-center justify-center gap-2 flex-wrap"
+      >
+        <li>
+          <button
+            type="button"
+            onClick={() => onCambio(paginaActual - 1)}
+            disabled={paginaActual === 1}
+            className={`${base} bg-white text-brand-strong border border-gray-200 hover:bg-gray-50`}
+          >
+            <span aria-hidden="true">‹</span>
+            <span className="sr-only">Página anterior</span>
+          </button>
+        </li>
+
+        {paginas.map((n) => {
+          const activa = n === paginaActual;
+          return (
+            <li key={n}>
+              <button
+                type="button"
+                onClick={() => onCambio(n)}
+                aria-current={activa ? "page" : undefined}
+                aria-label={`Página ${n}`}
+                className={`${base} ${
+                  activa
+                    ? "bg-brand-strong text-white focus-on-brand"
+                    : "bg-white text-brand-strong border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                {n}
+              </button>
+            </li>
+          );
+        })}
+
+        <li>
+          <button
+            type="button"
+            onClick={() => onCambio(paginaActual + 1)}
+            disabled={paginaActual === totalPaginas}
+            className={`${base} bg-white text-brand-strong border border-gray-200 hover:bg-gray-50`}
+          >
+            <span aria-hidden="true">›</span>
+            <span className="sr-only">Página siguiente</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  );
+}
+
+function CatalogoSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-label="Cargando productos"
+      className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+    >
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-white rounded-lg overflow-hidden border border-gray-100 shadow-md flex flex-col"
+        >
+          <div className="h-48 bg-gray-100 animate-pulse border-b border-gray-100" />
+          <div className="p-6 flex-1 flex flex-col gap-3">
+            <div className="h-3 w-24 bg-gray-100 rounded animate-pulse" />
+            <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+            <div className="h-4 w-2/3 bg-gray-100 rounded animate-pulse" />
+            <div className="h-9 w-full bg-gray-100 rounded-lg animate-pulse mt-auto" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function CatalogPage() {
@@ -26,9 +135,7 @@ export default function CatalogPage() {
   const [selectedCategory, setSelectedCategory] = useState("Todas");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
-
-  // NUEVO ESTADO: Controla el modal de detalles
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [pagina, setPagina] = useState(1);
 
   // Fetch a nuestra API creada
   useEffect(() => {
@@ -38,7 +145,6 @@ export default function CatalogPage() {
         if (!res.ok) throw new Error("Error al obtener los datos");
 
         const data = await res.json();
-        console.log("PRODUCTOS DE LA API:", data); // 👁️ Revisa esto en la consola del navegador (F12)
         setAllProducts(data);
       } catch (err) {
         console.error(err);
@@ -55,6 +161,10 @@ export default function CatalogPage() {
     const unique = Array.from(new Set(allProducts.map((p) => p.category)));
     return ["Todas", ...unique.sort()];
   }, [allProducts]);
+
+  // Con una sola categoría real, "Todas" y esa categoría dan el mismo
+  // resultado: el filtro ocupa espacio sin discriminar nada.
+  const showCategoryFilter = categories.length > 2;
 
   // Aplicamos filtros y búsqueda
   const filteredProducts = useMemo(() => {
@@ -76,161 +186,263 @@ export default function CatalogPage() {
     return filtered.sort((a, b) => {
       if (sortBy === "name") return a.name.localeCompare(b.name);
       if (sortBy === "price") return a.price - b.price;
-      if (sortBy === "stock") return b.stock - a.stock;
       return 0;
     });
   }, [allProducts, selectedCategory, searchTerm, sortBy]);
 
-  // Bloquea el scroll del body cuando el modal está abierto
+  // Cualquier cambio de filtro invalida la página actual: si estabas en la 5
+  // y filtras a 10 resultados, quedarías mirando una página vacía.
   useEffect(() => {
-    if (selectedProduct) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-  }, [selectedProduct]);
+    setPagina(1);
+  }, [selectedCategory, searchTerm, sortBy]);
+
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(filteredProducts.length / POR_PAGINA),
+  );
+  const paginaActual = Math.min(pagina, totalPaginas);
+  const desde = (paginaActual - 1) * POR_PAGINA;
+  const productosVisibles = filteredProducts.slice(desde, desde + POR_PAGINA);
+
+  function irAPagina(n: number) {
+    setPagina(n);
+    // Sin esto el usuario cambia de página y sigue mirando el pie de la
+    // anterior. `scroll-behavior` ya lo cubre `prefers-reduced-motion`.
+    document
+      .getElementById("resultados")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // Texto del subtítulo: durante la carga no podemos decir "0 productos",
+  // porque se lee como catálogo vacío en vez de catálogo cargando.
+  const subtitle = isLoading
+    ? "Cargando catálogo…"
+    : error
+      ? "No se pudo cargar el catálogo"
+      : `Explora nuestros ${filteredProducts.length} productos disponibles`;
 
   return (
     <>
       <Navbar />
-      <main className="bg-[#f3f5f4] min-h-screen pt-24 relative">
-        {/* Header */}
-        <section className="bg-gradient-to-r from-[#44abff] to-[#0b63cd] text-white py-12">
-          <div className="container mx-auto px-6 max-w-7xl">
-            <h1 className="text-4xl lg:text-5xl font-black mb-4">Catálogo</h1>
-            <p className="text-lg text-white/90">
-              Explora nuestros {filteredProducts.length} productos disponibles
-            </p>
+      <main className="relative min-h-screen bg-surface pt-24">
+        {/* Cabecera: el buscador vive aquí, no escondido en la barra lateral.
+            Es lo primero que hace quien llega con un código en la mano. */}
+        {/* Base en --ink (#0a1a2f, la tinta oscura original), con un
+            brillo radial hacia --brand-strong desde donde arranca el texto
+            -- como el degradado anterior pero con el par de tonos correcto.
+            Sin cálculo de tope esta vez: --ink y --brand-strong ya estaban
+            verificados para texto blanco en 17,48:1 y 5,71:1 respectivamente
+            (medidos antes en esta misma sesión), así que cualquier punto
+            intermedio del radial cae dentro de ese rango. */}
+        <section className="bg-[radial-gradient(140%_140%_at_12%_15%,var(--brand-strong)_0%,var(--ink)_100%)] py-14 text-white">
+          <div className="container mx-auto max-w-7xl px-6">
+            <div className="mb-6 flex items-center gap-3">
+              <ControlPatches />
+              <span className="font-mono text-xs uppercase tracking-[0.2em] text-white">
+                Tóner · Tintas · Drums · Chips
+              </span>
+            </div>
+
+            <h1 className="font-display text-[clamp(2.5rem,6vw,4.5rem)] font-black uppercase leading-none tracking-tight [font-stretch:115%]">
+              Catálogo
+            </h1>
+            <p className="mt-4 text-lg text-white">{subtitle}</p>
+
+            <div className="mt-8 max-w-xl">
+              <label
+                htmlFor="catalogo-buscar"
+                className="mb-2 block font-mono text-xs uppercase tracking-[0.2em] text-white"
+              >
+                Buscar por nombre o código
+              </label>
+              <input
+                id="catalogo-buscar"
+                type="search"
+                placeholder="Ej. A-GI-10Y"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-lg border border-white/15 bg-ink-soft px-5 py-4 font-mono text-white placeholder:text-slate-400"
+              />
+            </div>
           </div>
         </section>
 
-        <div className="container mx-auto px-6 max-w-7xl py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-white rounded-lg p-6 sticky top-28"
-              >
-                <div className="mb-6">
-                  <label className="block text-sm font-bold text-[#0b63cd] mb-2">
-                    Buscar
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Producto o código..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#44abff] outline-none"
-                  />
-                </div>
+        <ControlStrip alto="h-2" />
 
-                <div className="mb-6">
-                  <h3 className="font-bold text-[#0b63cd] mb-4">Categorías</h3>
-                  <div className="space-y-2">
-                    {categories.map((cat, idx) => (
-                      <motion.button
+        <div className="container mx-auto max-w-7xl px-6 pb-12 pt-8">
+          <div>
+            {/* Barra de herramientas: con el buscador en la cabecera y una sola
+                categoría, la barra lateral quedaba con un desplegable suelto y
+                robando un cuarto del ancho a los productos. */}
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="sr-only">Filtros</h2>
+                {!showCategoryFilter && (
+                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-slate-500">
+                    {filteredProducts.length}{" "}
+                    {filteredProducts.length === 1 ? "producto" : "productos"}
+                  </p>
+                )}
+                {showCategoryFilter &&
+                  categories.map((cat, idx) => {
+                    const isActive = selectedCategory === cat;
+                    return (
+                      <button
                         key={`category-${cat}-${idx}`}
-                        whileHover={{ x: 5 }}
-                        onClick={() => setSelectedCategory(cat)} // Asegura que si hace clic en "Todas" se guarde "Todas"
-                        className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                          selectedCategory === cat
-                            ? "bg-[#44abff] text-white font-bold"
-                            : "text-gray-700 hover:bg-gray-100"
+                        type="button"
+                        aria-pressed={isActive}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider transition-colors ${
+                          isActive
+                            ? "focus-on-brand bg-ink text-white"
+                            : "bg-white text-slate-600 hover:bg-slate-100"
                         }`}
                       >
                         {cat}
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
+                      </button>
+                    );
+                  })}
+              </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-[#0b63cd] mb-2">
-                    Ordenar por
-                  </label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#44abff] outline-none"
-                  >
-                    <option value="name">Nombre</option>
-                    <option value="price">Precio</option>
-                    <option value="stock">Stock</option>
-                  </select>
-                </div>
-              </motion.div>
+              <div className="flex items-center gap-3">
+                <label
+                  htmlFor="catalogo-ordenar"
+                  className="font-mono text-xs uppercase tracking-[0.2em] text-slate-500"
+                >
+                  Ordenar
+                </label>
+                <select
+                  id="catalogo-ordenar"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 focus:border-brand-strong"
+                >
+                  <option value="name">Nombre</option>
+                  <option value="price">Precio</option>
+                </select>
+              </div>
             </div>
 
-            {/* Products Grid */}
-            <div className="lg:col-span-3">
+            <div id="resultados">
+              <h2 className="sr-only">Productos</h2>
+
+              {/* Anuncia el resultado a lectores de pantalla sin ocupar espacio */}
+              <p role="status" aria-live="polite" className="sr-only">
+                {isLoading
+                  ? "Cargando productos"
+                  : error
+                    ? ""
+                    : `${filteredProducts.length} productos encontrados. Página ${paginaActual} de ${totalPaginas}.`}
+              </p>
+
               {isLoading ? (
-                <div className="text-center py-20">
-                  <p className="text-xl text-[#0b63cd] font-bold animate-pulse">
-                    Cargando catálogo...
-                  </p>
-                </div>
+                <CatalogoSkeleton />
               ) : error ? (
-                <div className="text-center py-20 text-red-500 font-bold">
+                <div
+                  role="alert"
+                  className="text-center py-20 text-red-700 font-bold"
+                >
                   {error}
                 </div>
               ) : filteredProducts.length > 0 ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                >
-                  {filteredProducts.map((product, idx) => (
-                    <motion.div
-                      key={`product-${product.id || "no-id"}-${idx}`}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      whileHover={{ y: -5 }}
-                      className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all border border-gray-100 flex flex-col"
-                    >
-                      <div className="relative h-48 bg-white p-4 flex items-center justify-center overflow-hidden border-b border-gray-100">
-                        <Image
-                          src={product.image || "/placeholder.jpg"}
-                          alt={product.name || "Producto ASTA"}
-                          width={150}
-                          height={150}
-                          className="object-contain hover:scale-110 transition-transform"
-                        />
-                        <div className="absolute top-2 right-2 bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-mono">
-                          {product.code}
-                        </div>
-                      </div>
-
-                      <div className="p-6 flex-1 flex flex-col">
-                        <p className="text-xs text-[#44abff] font-semibold mb-2 uppercase line-clamp-1">
-                          {product.category}
-                        </p>
-                        <h3 className="font-bold text-[#0b63cd] mb-4 line-clamp-2 flex-1">
-                          {product.name}
-                        </h3>
-                        {/* Formateo de precio profesional */}
-                        {/* <p className="font-bold text-xl mb-4 text-gray-800">
-                          $
-                          {product.price.toLocaleString("es-VE", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p> */}
-
-                        <Link
-                          href={`/producto/${product.code}`}
-                          className="w-full text-center px-4 py-2 bg-[#44abff] text-white rounded-lg font-bold hover:bg-[#0b63cd] transition-colors mt-auto block"
+                <>
+                  <motion.ul
+                    role="list"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                  >
+                    {productosVisibles.map((product, idx) => (
+                      <Fragment key={`fila-${product.id || "no-id"}-${idx}`}>
+                        {/* Corta la retícula a media página: 24 tarjetas
+                            seguidas se leen como una hoja de cálculo. */}
+                        {idx === 12 && (
+                          <li className="sm:col-span-2 lg:col-span-3 xl:col-span-4">
+                            <div className="flex flex-col items-start gap-5 rounded-xl bg-ink p-8 md:flex-row md:items-center md:justify-between">
+                              <div>
+                                <ControlPatches className="mb-4" />
+                                <p className="font-display text-2xl font-black uppercase tracking-tight text-white [font-stretch:115%]">
+                                  ¿No encuentras tu modelo?
+                                </p>
+                                <p className="mt-2 max-w-md text-sm text-slate-300">
+                                  Dinos qué impresora tienes y te decimos qué
+                                  consumible le corresponde.
+                                </p>
+                              </div>
+                              <Link
+                                href="/contact"
+                                className="shrink-0 rounded-lg bg-white px-6 py-3 font-display font-bold text-ink transition-colors hover:bg-slate-100"
+                              >
+                                Consultar compatibilidad
+                              </Link>
+                            </div>
+                          </li>
+                        )}
+                        <motion.li
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            delay:
+                              Math.min(idx, MAX_TARJETAS_ESCALONADAS) * 0.04,
+                          }}
+                          whileHover={{ y: -5 }}
+                          className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all border border-gray-100 flex flex-col"
                         >
-                          Ver Detalles
-                        </Link>
-                      </div>
-                    </motion.div>
-                  ))}
-                </motion.div>
+                          <div className="relative h-48 bg-white p-4 flex items-center justify-center overflow-hidden border-b border-gray-100">
+                            <Image
+                              src={product.image || "/placeholder.jpg"}
+                              alt={product.name || "Producto ASTA"}
+                              width={150}
+                              height={150}
+                              className="object-contain hover:scale-110 transition-transform"
+                            />
+                            <div className="absolute top-2 right-2 rounded bg-gray-100 px-2 py-1 font-mono text-xs uppercase tracking-wider text-gray-600">
+                              {product.code}
+                            </div>
+                          </div>
+
+                          <div className="p-6 flex-1 flex flex-col">
+                            <p className="text-xs text-brand-strong font-semibold mb-2 uppercase line-clamp-1">
+                              {product.category}
+                            </p>
+                            {/* Sin uppercase: son nombres tecnicos largos que
+                                pierden legibilidad forzados a mayusculas. */}
+                            <h3 className="mb-4 line-clamp-2 flex-1 font-display font-bold text-ink">
+                              {product.name}
+                            </h3>
+
+                            <Link
+                              href={`/producto/${product.code}`}
+                              className="w-full text-center px-4 py-2 bg-brand-strong text-white rounded-lg font-bold hover:bg-brand-darker transition-colors mt-auto block focus-on-brand"
+                            >
+                              Ver Detalles
+                              {/* 150 enlaces idénticos son inservibles en un lector
+                              de pantalla: le damos destino a cada uno. */}
+                              <span className="sr-only">
+                                {" "}
+                                de {product.name}
+                              </span>
+                            </Link>
+                          </div>
+                        </motion.li>
+                      </Fragment>
+                    ))}
+                  </motion.ul>
+
+                  <p className="mt-8 text-center text-sm text-gray-600">
+                    Mostrando {desde + 1}–
+                    {Math.min(desde + POR_PAGINA, filteredProducts.length)} de{" "}
+                    {filteredProducts.length} productos
+                  </p>
+
+                  <Paginacion
+                    paginaActual={paginaActual}
+                    totalPaginas={totalPaginas}
+                    onCambio={irAPagina}
+                  />
+                </>
               ) : (
-                <div className="text-center py-12">
+                <div role="status" className="text-center py-12">
                   <p className="text-xl text-gray-600">
                     No hay productos que coincidan con tu búsqueda
                   </p>
@@ -240,114 +452,6 @@ export default function CatalogPage() {
           </div>
         </div>
       </main>
-
-      {/* MODAL DE DETALLES DEL PRODUCTO */}
-      <AnimatePresence>
-        {selectedProduct && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-            {/* Fondo oscuro con blur (clic para cerrar) */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedProduct(null)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-
-            {/* Contenedor del Modal */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row z-10 max-h-[90vh]"
-            >
-              {/* Botón de cerrar (X) */}
-              <button
-                onClick={() => setSelectedProduct(null)}
-                className="absolute top-4 right-4 z-20 w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-colors"
-              >
-                ✕
-              </button>
-
-              {/* Lado izquierdo: Imagen */}
-              <div className="w-full md:w-1/2 bg-gray-50 p-8 flex items-center justify-center border-b md:border-b-0 md:border-r border-gray-100 min-h-[300px]">
-                <div className="relative w-full h-full max-w-[300px] aspect-square">
-                  <Image
-                    src={selectedProduct.image || "/placeholder.jpg"}
-                    alt={selectedProduct.name}
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Lado derecho: Información */}
-              <div className="w-full md:w-1/2 p-8 flex flex-col overflow-y-auto">
-                <span className="inline-block px-3 py-1 bg-[#e6f4ff] text-[#0b63cd] text-xs font-bold rounded-full w-fit mb-4">
-                  {selectedProduct.category}
-                </span>
-
-                <h2 className="text-2xl md:text-3xl font-black text-gray-800 mb-2">
-                  {selectedProduct.name}
-                </h2>
-
-                <p className="text-gray-500 font-mono text-sm mb-6 pb-6 border-b border-gray-100">
-                  SKU: {selectedProduct.code}
-                </p>
-
-                {/* 🔴 NUEVA SECCIÓN DE DESCRIPCIÓN */}
-                <div className="mb-6">
-                  <h4 className="text-sm font-bold text-gray-800 mb-2">
-                    Descripción
-                  </h4>
-                  <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
-                    {selectedProduct.description}
-                  </p>
-                </div>
-
-                {/* <div className="mb-8">
-                  <p className="text-sm text-gray-500 mb-1">Precio</p>
-                  <p className="text-4xl font-black text-[#0b63cd]">
-                    $
-                    {selectedProduct.price.toLocaleString("es-VE", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </p>
-                </div> */}
-
-                <div className="space-y-4 mb-8">
-                  <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
-                    <span className="text-gray-600 font-semibold">
-                      Disponibilidad
-                    </span>
-                    <span
-                      className={`font-bold ${selectedProduct.stock > 0 ? "text-green-600" : "text-red-500"}`}
-                    >
-                      {selectedProduct.stock > 0
-                        ? `${selectedProduct.stock} unidades en stock`
-                        : "Agotado"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Botón de acción */}
-                <button
-                  className="w-full py-4 mt-auto bg-[#44abff] hover:bg-[#0b63cd] text-white font-bold rounded-xl transition-colors shadow-lg shadow-blue-200"
-                  onClick={() => {
-                    // Aquí puedes agregar la lógica para añadir al carrito a futuro
-                    alert(
-                      "Función para añadir al carrito o contactar a ventas pronto",
-                    );
-                  }}
-                >
-                  Contactar Asesor
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </>
   );
 }

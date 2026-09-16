@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
 export function Navbar() {
@@ -25,6 +26,7 @@ export function Navbar() {
         {/* Logo Optimizado */}
         <motion.a
           href="/"
+          aria-label="ASTA - Ir al inicio"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="relative flex items-center"
@@ -42,35 +44,35 @@ export function Navbar() {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-10">
-          {navItems.map((item, idx) => (
-            <motion.a
-              key={idx}
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
               href={item.href}
-              className="text-slate-600 font-bold text-sm tracking-wide hover:text-blue-600 transition-colors relative group"
+              className="text-slate-600 font-bold text-sm tracking-wide hover:text-blue-600 transition-colors relative group py-2"
             >
               {item.label}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all group-hover:w-full" />
-            </motion.a>
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all group-hover:w-full" />
+            </Link>
           ))}
         </div>
 
         {/* CTA Button Minimalista */}
-        <motion.button
-          whileHover={{
-            scale: 1.05,
-            boxShadow: "0 10px 20px -10px rgba(11, 99, 205, 0.4)",
-          }}
-          whileTap={{ scale: 0.95 }}
-          className="hidden md:block px-8 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all"
+        <Link
+          href="/contact"
+          className="hidden md:block px-8 py-3 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all"
         >
           Contactar
-        </motion.button>
+        </Link>
 
         {/* Mobile Menu Button */}
         <motion.button
+          type="button"
           whileTap={{ scale: 0.9 }}
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 text-blue-600"
+          aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="menu-movil"
+          className="md:hidden p-3 -mr-3 text-blue-600"
         >
           <div className="space-y-1.5">
             <motion.span
@@ -98,23 +100,28 @@ export function Navbar() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
+          id="menu-movil"
           className="md:hidden bg-white backdrop-blur-lg border-t border-slate-100 absolute w-full shadow-xl"
         >
-          <div className="flex flex-col gap-6 p-8">
-            {navItems.map((item, idx) => (
-              <a
-                key={idx}
+          <nav className="flex flex-col gap-2 p-6" aria-label="Menú principal">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
                 href={item.href}
-                className="text-center text-slate-600 font-black  text-2xl "
+                className="text-center text-slate-600 font-black text-2xl py-3 rounded-xl hover:bg-slate-50"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
-            <button className="w-full py-4 bg-blue-600 text-white rounded-2xl  text-lg shadow-lg shadow-blue-600/20">
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full mt-4 py-4 bg-blue-600 text-white rounded-2xl text-lg font-bold text-center shadow-lg shadow-blue-600/20 focus-on-brand"
+            >
               Contactar ahora
-            </button>
-          </div>
+            </Link>
+          </nav>
         </motion.div>
       )}
     </motion.nav>

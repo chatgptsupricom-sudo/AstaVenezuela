@@ -66,8 +66,8 @@ export function ProductGallery() {
             whileTap={{ scale: 0.95 }}
             className={`px-6 py-2 rounded-full font-semibold transition-all ${
               activeCategory === category.id
-                ? 'bg-[#0b63cd] text-white shadow-lg'
-                : 'bg-white text-[#0b63cd] border border-[#0b63cd] hover:bg-blue-50'
+                ? 'bg-brand-strong text-white shadow-lg'
+                : 'bg-white text-brand-strong border border-brand-strong hover:bg-blue-50'
             }`}
           >
             {category.name}
@@ -88,7 +88,7 @@ export function ProductGallery() {
             className="group relative bg-white rounded-2xl overflow-hidden border border-blue-100 hover:border-blue-300 transition-all hover:shadow-xl"
           >
             {/* Image Background */}
-            <div className="h-40 bg-gradient-to-br from-[#44abff] to-[#0b63cd] flex items-center justify-center overflow-hidden">
+            <div className="h-40 bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center overflow-hidden">
               <motion.span
                 whileHover={{ scale: 1.2 }}
                 className="text-6xl"
@@ -99,17 +99,17 @@ export function ProductGallery() {
 
             {/* Content */}
             <div className="p-5">
-              <h3 className="font-bold text-gray-900 mb-2 group-hover:text-[#0b63cd] transition">
+              <h3 className="font-bold text-gray-900 mb-2 group-hover:text-brand-strong transition">
                 {product.name}
               </h3>
 
               <div className="space-y-2 text-sm text-gray-600 mb-4">
                 <p className="flex items-start">
-                  <span className="text-[#0b63cd] mr-2">✓</span>
+                  <span className="text-brand-strong mr-2">✓</span>
                   {product.compatibility}
                 </p>
                 <p className="flex items-start">
-                  <span className="text-[#0b63cd] mr-2">✓</span>
+                  <span className="text-brand-strong mr-2">✓</span>
                   {product.yield}
                 </p>
               </div>
@@ -117,14 +117,14 @@ export function ProductGallery() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="w-full py-2 bg-[#0b63cd] text-white rounded-lg font-semibold hover:bg-[#0b2d4d] transition-colors text-sm"
+                className="w-full py-2 bg-brand-strong text-white rounded-lg font-semibold hover:bg-brand-navy transition-colors text-sm"
               >
                 Ver Detalles
               </motion.button>
             </div>
 
             {/* Hover Gradient */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-t from-[#0b63cd] to-transparent transition-opacity" />
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-10 bg-gradient-to-t from-brand-strong to-transparent transition-opacity" />
           </motion.div>
         ))}
       </motion.div>

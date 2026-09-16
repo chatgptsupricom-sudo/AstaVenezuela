@@ -1,25 +1,26 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
+import { Star } from "lucide-react";
 
 const TESTIMONIALS = [
   {
-    name: 'Carlos García',
-    role: 'Gerente de Ventas',
-    text: 'ASTA nos ha permitido ofrecer la mejor calidad a nuestros clientes sin comprometer los márgenes. Productos confiables.',
-    avatar: '👨‍💼',
+    name: "Carlos García",
+    role: "Gerente de Ventas",
+    text: "ASTA nos ha permitido ofrecer la mejor calidad a nuestros clientes sin comprometer los márgenes. Productos confiables.",
+    avatar: null,
   },
   {
-    name: 'María López',
-    role: 'Dueña de Imprenta',
-    text: 'Llevo 5 años usando ASTA y no cambio. La consistencia en calidad es incomparable. Mis clientes siempre notan la diferencia.',
-    avatar: '👩‍💼',
+    name: "María López",
+    role: "Dueña de Imprenta",
+    text: "Llevo 5 años usando ASTA y no cambio. La consistencia en calidad es incomparable. Mis clientes siempre notan la diferencia.",
+    avatar: null,
   },
   {
-    name: 'Juan Rodríguez',
-    role: 'Distribuidor Autorizado',
-    text: 'El soporte de ASTA es excepcional. Siempre tienen respuestas rápidas y soluciones efectivas. Una marca confiable 100%.',
-    avatar: '👨‍🔧',
+    name: "Juan Rodríguez",
+    role: "Distribuidor Autorizado",
+    text: "El soporte de ASTA es excepcional. Siempre tienen respuestas rápidas y soluciones efectivas. Una marca confiable 100%.",
+    avatar: null,
   },
 ];
 
@@ -34,11 +35,12 @@ export function Testimonials() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-5xl font-black text-[#0b63cd] mb-4">
+          <h2 className="text-5xl font-black text-brand-strong mb-4">
             Lo que dicen nuestros clientes
           </h2>
           <p className="text-gray-700 text-lg max-w-2xl mx-auto">
-            Descubre por qué cientos de negocios confían en ASTA para sus necesidades de impresión.
+            Descubre por qué cientos de negocios confían en ASTA para sus
+            necesidades de impresión.
           </p>
         </motion.div>
 
@@ -52,12 +54,17 @@ export function Testimonials() {
               viewport={{ once: true }}
               className="bg-white rounded-2xl p-8 border border-blue-100 hover:border-blue-300 hover:shadow-lg transition-all"
             >
-              {/* Stars */}
-              <div className="flex gap-1 mb-4">
+              <div className="mb-4 flex gap-1" aria-label="5 de 5 estrellas">
                 {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-yellow-400 text-lg">
-                    ★
-                  </span>
+                  <Star
+                    key={i}
+                    aria-hidden="true"
+                    className="size-4"
+                    style={{
+                      color: "var(--process-y)",
+                      fill: "var(--process-y)",
+                    }}
+                  />
                 ))}
               </div>
 
@@ -68,10 +75,17 @@ export function Testimonials() {
 
               {/* Author */}
               <div className="flex items-center gap-4">
-                <div className="text-4xl">{testimonial.avatar}</div>
+                <div
+                  aria-hidden="true"
+                  className="flex size-12 shrink-0 items-center justify-center rounded-full bg-ink font-display font-bold text-white"
+                >
+                  {testimonial.name.charAt(0)}
+                </div>
                 <div>
                   <p className="font-bold text-gray-900">{testimonial.name}</p>
-                  <p className="text-sm text-[#0b63cd] font-semibold">{testimonial.role}</p>
+                  <p className="text-sm text-brand-strong font-semibold">
+                    {testimonial.role}
+                  </p>
                 </div>
               </div>
             </motion.div>
