@@ -1,4 +1,5 @@
 import { canalDeCodigo } from "@/lib/canal-tinta";
+import { parecidos, tipoDe } from "@/lib/clasificar";
 import { odooExecute } from "@/lib/odoo-rpc";
 import { NextResponse } from "next/server";
 
@@ -20,6 +21,8 @@ const CAMPOS = [
   "list_price",
   "categ_id",
   "description_sale",
+  // Existencias físicas en Odoo; la ficha decide "En stock" / "Sin stock".
+  "qty_available",
 ];
 
 interface RegistroOdoo {
@@ -29,6 +32,7 @@ interface RegistroOdoo {
   list_price: number | false;
   categ_id: [number, string] | false;
   description_sale?: string | false;
+  qty_available?: number;
 }
 
 function formatear(p: RegistroOdoo) {
@@ -39,12 +43,20 @@ function formatear(p: RegistroOdoo) {
     name: p.name || "Sin nombre",
     category: Array.isArray(p.categ_id) ? p.categ_id[1] : "Sin Categoría",
     price: p.list_price || 0,
-    stock: 0,
+    stock: p.qty_available ?? 0,
     image: `/api/image/product/${p.id}`,
     code,
-    description: p.description_sale || "Sin descripción.",
-    // null en drums, chips y tóner genérico: no tienen un canal de tinta real.
-    canal: code ? canalDeCodigo(code) : null,
+    // Vacío cuando Odoo no tiene texto: la ficha oculta el bloque en vez de
+    // mostrar un "Sin descripción." literal.
+    description: p.description_sale || "",
+    // null en drums y chips: no tienen un canal de tinta real. Si el código no
+    // lo dice ("A-W2112A-CH"), se mira el nombre ("... YELLOW"), solo en
+    // tóner y tinta.
+    canal:
+      (code ? canalDeCodigo(code) : null) ??
+      (["Tóner", "Tinta"].includes(tipoDe(p.name || "") ?? "")
+        ? canalDeCodigo(p.name || "")
+        : null),
   };
 }
 
@@ -52,49 +64,36 @@ function formatear(p: RegistroOdoo) {
 // /api/productos (el catálogo COMPLETO, con imágenes en base64 a resolución
 // completa) solo para encontrar UN producto por su código y armar "también
 // te podría interesar" filtrando en el cliente. Cada visita a cualquier
-// producto descargaba el catálogo entero. Aquí se hacen dos consultas
-// puntuales a Odoo — el producto exacto, y hasta 5 de su misma categoría —
-// y las imágenes viajan como URL, no como datos incrustados.
+// producto descargaba el catálogo entero (con imágenes). Ahora es UNA
+// consulta a Odoo del catálogo sin imágenes (162 filas ligeras): de ahí sale
+// el producto y sus parecidos, y las fotos viajan como URL.
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ code: string }> },
 ) {
   const { code } = await params;
 
-  const productos = await odooExecute<RegistroOdoo[]>(
-    "product.template",
-    "search_read",
-    [[...DOMINIO_CATALOGO, ["default_code", "=", code]]],
-    { fields: CAMPOS, limit: 1 },
-  );
+  const catalogo = (
+    (await odooExecute<RegistroOdoo[]>(
+      "product.template",
+      "search_read",
+      [DOMINIO_CATALOGO],
+      { fields: CAMPOS, limit: 500 },
+    )) || []
+  ).map(formatear);
 
-  if (!productos || productos.length === 0) {
+  const producto = catalogo.find((p) => p.code === code);
+  if (!producto) {
     return NextResponse.json(
       { error: "Producto no encontrado" },
       { status: 404 },
     );
   }
 
-  const producto = formatear(productos[0]);
-
-  const categId = productos[0].categ_id;
-  let similares: ReturnType<typeof formatear>[] = [];
-
-  if (Array.isArray(categId)) {
-    const registrosSimilares = await odooExecute<RegistroOdoo[]>(
-      "product.template",
-      "search_read",
-      [
-        [
-          ...DOMINIO_CATALOGO,
-          ["categ_id", "=", categId[0]],
-          ["id", "!=", productos[0].id],
-        ],
-      ],
-      { fields: CAMPOS, limit: 5 },
-    );
-    similares = (registrosSimilares || []).map(formatear);
-  }
+  // Antes eran los 5 primeros de la categoría (que es una sola para todo el
+  // catálogo): a un tóner HP le salían tintas Canon y chips. Ahora son los
+  // de la misma familia — otros colores, con/sin chip, variante A/X.
+  const similares = parecidos(producto, catalogo);
 
   return NextResponse.json({ product: producto, similares });
 }

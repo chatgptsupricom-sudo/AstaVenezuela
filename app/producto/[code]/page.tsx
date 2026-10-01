@@ -1,11 +1,15 @@
+import { marcaDe, nombreLimpio } from "@/lib/clasificar";
 import { Metadata } from "next";
+import { cache } from "react";
 import xmlrpc from "xmlrpc";
 import ProductDetailPageClient from "./ProductDetailPageClient";
 
 const SITE_URL = "https://astavenezuela.com";
 
 // 1. FUNCIÓN INTERNA: Conecta directamente a Odoo en el servidor sin pasar por el fetch
-async function getOdooProductData(code: string): Promise<any> {
+// cache(): generateMetadata y la página piden el mismo producto en la misma
+// petición; así Odoo se consulta una sola vez.
+const getOdooProductData = cache(async function (code: string): Promise<any> {
   const odooConfig = {
     url: process.env.NEXT_PUBLIC_ODOO_URL || "",
     db: process.env.ODOO_DB || "",
@@ -48,7 +52,10 @@ async function getOdooProductData(code: string): Promise<any> {
             "product.template",
             "search_read",
             [searchDomain],
-            { fields: ["id", "name", "description_sale"], limit: 1 },
+            {
+              fields: ["id", "name", "description_sale", "default_code", "qty_available"],
+              limit: 1,
+            },
           ],
           (err, products) => {
             if (err || !products || products.length === 0) return resolve(null);
@@ -58,7 +65,7 @@ async function getOdooProductData(code: string): Promise<any> {
       },
     );
   });
-}
+});
 
 // 2. GENERACIÓN DE METADATA (Next.js 15+ compatible con params asíncronos)
 export async function generateMetadata({
@@ -69,7 +76,9 @@ export async function generateMetadata({
   const resolvedParams = await params;
   const code = resolvedParams.code;
 
-  let title = "Producto | ASTA Venezuela";
+  // El layout ya añade " | ASTA Venezuela" vía title.template; Open Graph no
+  // hereda la plantilla, así que ahí va el sufijo explícito.
+  let title = "Producto";
   let description =
     "Consulta más información sobre este producto en nuestro catálogo.";
   let odooImageUrl = `${SITE_URL}/placeholder.jpg`;
@@ -79,21 +88,24 @@ export async function generateMetadata({
     const product = await getOdooProductData(code);
 
     if (product && product.id) {
-      title = `${product.name} | ASTA Venezuela`;
+      title = nombreLimpio(product.name);
       description = product.description_sale || description;
 
-      // 📷 Al usar el ID numérico directo de Odoo, la URL se arma perfectamente sin fallas de API
-      odooImageUrl = `https://supricom2.odoo.com/web/image/product.template/${product.id}/image_1024`;
+      // Misma ruta que pinta la ficha: si Odoo no tiene foto, cae a la foto
+      // local de public/productos en vez del genérico de Odoo.
+      odooImageUrl = `${SITE_URL}/api/image/product/${product.id}?s=512`;
     }
   } catch (error) {
     console.error("Error en generateMetadata consultando Odoo:", error);
   }
 
+  const socialTitle = `${title} | ASTA Venezuela`;
+
   return {
     title,
     description,
     openGraph: {
-      title,
+      title: socialTitle,
       description,
       url: `${SITE_URL}/producto/${code}`,
       siteName: "ASTA Venezuela",
@@ -102,20 +114,61 @@ export async function generateMetadata({
           url: odooImageUrl,
           width: 800,
           height: 800,
-          alt: title,
+          alt: socialTitle,
         },
       ],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: socialTitle,
       description,
       images: [odooImageUrl],
     },
   };
 }
 
-export default function ProductDetailPage() {
-  return <ProductDetailPageClient />;
+export default async function ProductDetailPage({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}) {
+  const { code } = await params;
+  const product = await getOdooProductData(code).catch(() => null);
+
+  // Datos estructurados para Google (schema.org/Product). Sin "offers":
+  // el precio de Odoo es un valor de relleno (1) y publicarlo sería falso.
+  const jsonLd = product?.id
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: nombreLimpio(product.name),
+        sku: product.default_code || code,
+        description: product.description_sale || undefined,
+        image: `${SITE_URL}/api/image/product/${product.id}?s=512`,
+        brand: { "@type": "Brand", name: "ASTA" },
+        ...(marcaDe(product.name, code) && {
+          isAccessoryOrSparePartFor: {
+            "@type": "Brand",
+            name: marcaDe(product.name, code),
+          },
+        }),
+      }
+    : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          // JSON.stringify no escapa "<": se reemplaza para que un nombre con
+          // "</script>" no pueda cerrar la etiqueta.
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, "\\" + "u003c"),
+          }}
+        />
+      )}
+      <ProductDetailPageClient />
+    </>
+  );
 }

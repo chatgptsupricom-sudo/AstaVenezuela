@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Send, Trash2, X } from "lucide-react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 // 🐼 Devuelve un sessionId persistente por navegador.
@@ -15,7 +16,9 @@ const getSessionId = () => {
   return id;
 };
 
-const PRODUCT_BASE_URL = "https://astavenezuela.com/producto/";
+// Rutas relativas: con el dominio de producción fijo, en local (o en un
+// dominio de pruebas) el chat abría y consultaba la web publicada.
+const PRODUCT_BASE_URL = "/producto/";
 const CHAT_STORAGE_KEY = "asta_messages";
 const DEFAULT_MESSAGES = [
   {
@@ -25,7 +28,7 @@ const DEFAULT_MESSAGES = [
   },
 ];
 
-const PRODUCTS_API_URL = "https://astavenezuela.com/api/productos/rapidito";
+const PRODUCTS_API_URL = "/api/productos/rapidito";
 let imageCache: Record<string, string> | null = null;
 let imagePromise: Promise<Record<string, string>> | null = null;
 
@@ -57,7 +60,7 @@ const resolveImage = (img?: string): string | null => {
   if (!img) return null;
   if (img === "/placeholder.jpg") return null;
   if (img.startsWith("data:") || img.startsWith("http")) return img;
-  return `https://astavenezuela.com${img.startsWith("/") ? "" : "/"}${img}`;
+  return img.startsWith("/") ? img : `/${img}`;
 };
 
 const ProductCard = ({
@@ -106,8 +109,6 @@ const ProductCard = ({
       </div>
       <a
         href={`${PRODUCT_BASE_URL}${encodeURIComponent(code)}`}
-        target="_blank"
-        rel="noopener noreferrer"
         className="self-start text-xs font-bold text-white bg-brand-strong hover:bg-brand-darker px-3 py-1.5 rounded-lg transition-colors"
       >
         Ver más
@@ -153,6 +154,9 @@ const renderBotMessage = (text: string, images: Record<string, string>) => {
 };
 
 export const Chatbot = () => {
+  // En la ficha de producto, en móvil, la barra fija "Cotizar por WhatsApp"
+  // ocupa el pie: el botón del chat se oculta ahí (subirlo tapaba el título).
+  const enFicha = usePathname()?.startsWith("/producto/") ?? false;
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState(DEFAULT_MESSAGES);
   const [input, setInput] = useState("");
@@ -262,7 +266,7 @@ export const Chatbot = () => {
       className={`fixed z-[100] flex flex-col items-end transition-all duration-300 ${
         isOpen
           ? "bottom-0 right-0 w-full h-full sm:bottom-6 sm:right-6 sm:w-auto sm:h-auto"
-          : "bottom-6 right-6"
+          : "bottom-4 right-4 sm:bottom-6 sm:right-6"
       }`}
     >
       <AnimatePresence>
@@ -304,14 +308,14 @@ export const Chatbot = () => {
                   onClick={handleClear}
                   title="Limpiar chat"
                   aria-label="Limpiar chat"
-                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                  className="focus-on-brand p-3 hover:bg-white/10 rounded-full transition-colors"
                 >
                   <Trash2 size={18} />
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
                   aria-label="Cerrar chat"
-                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                  className="focus-on-brand p-3 hover:bg-white/10 rounded-full transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -331,7 +335,7 @@ export const Chatbot = () => {
                   <div
                     className={`max-w-[85%] p-4 rounded-2xl text-sm font-medium ${
                       msg.sender === "user"
-                        ? "bg-brand-strong text-white rounded-tr-none shadow-lg shadow-blue-900/10"
+                        ? "bg-brand-strong text-white rounded-tr-none shadow-lg shadow-ink/10"
                         : "bg-white text-slate-700 rounded-tl-none border border-slate-100 shadow-sm"
                     }`}
                   >
@@ -343,7 +347,8 @@ export const Chatbot = () => {
               ))}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-white text-slate-400 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm p-4 flex gap-1 items-center">
+                  <div role="status" className="bg-white text-slate-400 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm p-4 flex gap-1 items-center">
+                    <span className="sr-only">Pandita está escribiendo</span>
                     <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:0ms]" />
                     <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:150ms]" />
                     <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce [animation-delay:300ms]" />
@@ -357,6 +362,7 @@ export const Chatbot = () => {
               <div className="relative flex items-center">
                 <input
                   type="text"
+                  aria-label="Escribe tu pregunta"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -364,14 +370,16 @@ export const Chatbot = () => {
                   className="w-full pl-4 pr-12 py-3 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-brand-strong transition-all outline-none"
                 />
                 <button
+                  type="button"
                   onClick={handleSend}
                   disabled={isLoading}
-                  className="absolute right-2 p-2 text-brand-strong hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Enviar mensaje"
+                  className="absolute right-2 p-2 text-brand-strong hover:bg-brand/10 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Send size={18} />
                 </button>
               </div>
-              <p className="text-[9px] text-center text-slate-400 mt-3 font-bold uppercase tracking-widest">
+              <p className="text-[10px] text-center text-slate-500 mt-3 font-bold uppercase tracking-widest">
                 Ingeniería en Impresión ASTA
               </p>
             </div>
@@ -383,25 +391,27 @@ export const Chatbot = () => {
         Se oculta en móvil (`hidden sm:flex`) si el chat está abierto,
         evitando superposiciones extrañas debajo del chat completo.
       */}
+      {/* 64px en móvil: a 96px tapaba los CTA del hero y el botón de envío
+          de contacto. En sm+ hay margen de sobra y recupera su tamaño. */}
       <motion.button
         type="button"
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
         aria-label={isOpen ? "Cerrar chat de ayuda" : "Abrir chat de ayuda"}
         aria-expanded={isOpen}
-        className={`relative w-24 h-24 bg-white rounded-full shadow-[0_15px_40px_rgba(11,99,205,0.4)] items-center justify-center overflow-hidden border-4 border-blue-50 group transition-all ${
-          isOpen ? "hidden sm:flex" : "flex"
+        className={`relative h-16 w-16 sm:h-24 sm:w-24 bg-white rounded-full shadow-[0_15px_40px_rgba(11,99,205,0.4)] items-center justify-center overflow-hidden border-4 border-brand/10 group transition-all ${
+          isOpen ? "hidden sm:flex" : enFicha ? "hidden md:flex" : "flex"
         }`}
       >
         <Image
           src="/Chatbot2.jpeg"
           alt=""
           fill
-          sizes="96px"
+          sizes="(min-width: 640px) 96px, 64px"
           className="object-cover p-1 transition-transform duration-300"
           priority
         />
-        <div className="absolute inset-0 bg-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="absolute inset-0 bg-brand-strong/5 opacity-0 group-hover:opacity-100 transition-opacity" />
       </motion.button>
     </div>
   );

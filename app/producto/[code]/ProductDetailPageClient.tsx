@@ -3,11 +3,13 @@
 import { ControlPatches, ControlStrip } from "@/components/ControlStrip";
 import { Navbar } from "@/components/Navbar";
 import { NOMBRE_CANAL, type Canal } from "@/lib/canal-tinta";
+import { chipDe, marcaDe, nombreLimpio, tipoDe } from "@/lib/clasificar";
+import { enlaceWhatsApp, mensajeProducto } from "@/lib/whatsapp";
 import { motion } from "framer-motion";
 import { ArrowLeft, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface Producto {
@@ -47,7 +49,6 @@ function DetalleSkeleton() {
 
 export default function ProductDetailPageClient() {
   const { code } = useParams<{ code: string }>();
-  const router = useRouter();
 
   const [product, setProduct] = useState<Producto | null>(null);
   const [similares, setSimilares] = useState<Producto[]>([]);
@@ -87,12 +88,12 @@ export default function ProductDetailPageClient() {
 
   const handleWhatsAppClick = () => {
     if (!product) return;
-    const phoneNumber = "584228008204";
-    const message = `Hola, quiero más información sobre este producto:\n\n*Producto:* ${product.name}\n*Código:* ${product.code}\n\nLink del producto: ${currentUrl}`;
-    window.open(
-      `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`,
-      "_blank",
-    );
+    const base = mensajeProducto(product.name, product.code, currentUrl);
+    const mensaje =
+      product.stock > 0
+        ? base
+        : `${base}\n\nVeo que está sin stock: ¿cuándo llega o qué alternativa me recomiendan?`;
+    window.open(enlaceWhatsApp(mensaje), "_blank", "noopener");
   };
 
   const handleShareClick = async () => {
@@ -125,6 +126,18 @@ export default function ProductDetailPageClient() {
   const marcoEstilo = canal
     ? ({ ["--canal" as string]: `var(--process-${canal})` } as const)
     : undefined;
+  const tipo = product ? tipoDe(product.name) : null;
+  const marca = product ? marcaDe(product.name, product.code) : null;
+  const chip = product ? chipDe(product.name, product.code) : null;
+  const ficha = (
+    [
+      ["Tipo", tipo],
+      ["Marca", marca],
+      ["Color", canal ? NOMBRE_CANAL[canal] : null],
+      ["Chip", chip],
+    ] as [string, string | null][]
+  ).filter((fila): fila is [string, string] => fila[1] !== null);
+
   const marcoClase = canal
     ? "border-[var(--canal)]/25 bg-[var(--canal)]/[0.05]"
     : "border-slate-200 bg-surface";
@@ -139,19 +152,49 @@ export default function ProductDetailPageClient() {
         <ControlStrip alto="h-1.5" />
       </div>
 
-      <main className="min-h-screen bg-white px-4 pb-20 pt-8 md:px-6">
+      {/* pb-28 en móvil: deja sitio a la barra fija de "Cotizar". */}
+      <main className="min-h-screen bg-white px-4 pb-28 pt-8 md:px-6 md:pb-20">
         <div className="container mx-auto max-w-7xl">
-          <Link
-            href="/catalog"
-            className="mb-8 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-slate-500 transition-colors hover:text-brand-strong"
-          >
-            <ArrowLeft
-              aria-hidden="true"
-              className="size-4"
-              strokeWidth={1.75}
-            />
-            Volver al catálogo
-          </Link>
+          {/* Migas: cada tramo abre el catálogo ya filtrado (?tipo, ?marca). */}
+          <nav aria-label="Ruta" className="mb-8">
+            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs uppercase tracking-[0.2em] text-slate-500">
+              <li>
+                <Link
+                  href="/catalog"
+                  className="inline-flex min-h-11 items-center gap-2 transition-colors hover:text-brand-strong"
+                >
+                  <ArrowLeft
+                    aria-hidden="true"
+                    className="size-4"
+                    strokeWidth={1.75}
+                  />
+                  Catálogo
+                </Link>
+              </li>
+              {tipo && (
+                <li className="flex items-center gap-2">
+                  <span aria-hidden="true">/</span>
+                  <Link
+                    href={`/catalog?tipo=${encodeURIComponent(tipo)}`}
+                    className="inline-flex min-h-11 items-center transition-colors hover:text-brand-strong"
+                  >
+                    {tipo}
+                  </Link>
+                </li>
+              )}
+              {tipo && marca && (
+                <li className="flex items-center gap-2">
+                  <span aria-hidden="true">/</span>
+                  <Link
+                    href={`/catalog?tipo=${encodeURIComponent(tipo)}&marca=${encodeURIComponent(marca)}`}
+                    className="inline-flex min-h-11 items-center transition-colors hover:text-brand-strong"
+                  >
+                    {marca}
+                  </Link>
+                </li>
+              )}
+            </ol>
+          </nav>
 
           {estado === "cargando" && <DetalleSkeleton />}
 
@@ -194,10 +237,6 @@ export default function ProductDetailPageClient() {
                 </motion.div>
 
                 <div className="flex flex-col justify-center">
-                  <span className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-brand-strong">
-                    {product.category}
-                  </span>
-
                   {/*
                     Sin `uppercase`: los nombres de producto de Odoo son
                     técnicos y largos ("ASTA CARTUCHO DE TONER BROTHER DE
@@ -205,42 +244,35 @@ export default function ProductDetailPageClient() {
                     escala de titular, como el resto de los H1 del sitio, los
                     haría ilegibles en vez de contundentes.
                   */}
-                  <h1 className="mb-6 font-display text-3xl font-black leading-tight text-ink md:text-4xl lg:text-5xl">
-                    {product.name}
+                  <h1 className="mb-6 font-display text-3xl font-black leading-tight text-ink lg:text-4xl">
+                    {nombreLimpio(product.name)}
                   </h1>
 
                   {/* Franja de datos: antes era texto suelto flotando en
                       blanco, sin ningún borde que lo agrupara como una sola
                       pieza de información. */}
-                  <div className="mb-8 flex flex-wrap items-center gap-x-6 gap-y-3 border-y border-slate-100 py-4">
-                    <span className="rounded-full bg-emerald-50 px-4 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700">
-                      En stock
-                    </span>
+                  <div className="mb-6 flex flex-wrap items-center gap-x-6 gap-y-3 border-y border-slate-100 py-4">
+                    {product.stock > 0 ? (
+                      <span className="rounded-full bg-emerald-50 px-4 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700">
+                        En stock
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-slate-100 px-4 py-1 text-xs font-bold uppercase tracking-wider text-slate-600">
+                        Sin stock
+                      </span>
+                    )}
                     <span className="font-mono text-sm text-slate-500">
                       SKU: {product.code}
                     </span>
-                    {canal && (
-                      <span className="flex items-center gap-2 font-mono text-sm text-slate-500">
-                        <span
-                          aria-hidden="true"
-                          className="size-3 rounded-sm"
-                          style={{ backgroundColor: `var(--process-${canal})` }}
-                        />
-                        Canal: {NOMBRE_CANAL[canal]}
-                      </span>
-                    )}
                   </div>
 
-                  <p className="mb-10 border-l-4 border-slate-200 pl-6 text-base leading-relaxed text-slate-600 md:text-lg">
-                    {product.description}
-                  </p>
-
                   <div className="flex w-full flex-col items-center gap-4 sm:w-fit sm:flex-row">
+                    {/* En móvil este botón vive en la barra fija de abajo. */}
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleWhatsAppClick}
-                      className="flex w-full items-center justify-center gap-3 whitespace-nowrap rounded-lg bg-whatsapp px-6 py-3.5 text-sm font-black tracking-wide text-white shadow-sm transition-colors hover:bg-whatsapp-dark sm:w-fit md:text-base"
+                      className="hidden w-full items-center justify-center gap-3 whitespace-nowrap rounded-lg bg-whatsapp px-6 py-3.5 text-sm font-black tracking-wide text-white shadow-sm transition-colors hover:bg-whatsapp-dark sm:w-fit md:flex md:text-base"
                     >
                       <Image
                         src="/whatsapp-wh.png"
@@ -249,7 +281,7 @@ export default function ProductDetailPageClient() {
                         height={22}
                         className="object-contain"
                       />
-                      Consultar
+                      Cotizar por WhatsApp
                     </motion.button>
 
                     <motion.button
@@ -266,12 +298,52 @@ export default function ProductDetailPageClient() {
                       {copied ? "¡Enlace copiado!" : "Compartir"}
                     </motion.button>
                   </div>
+                  {/* Justo antes de abrir WhatsApp: qué va a pasar. Sin stock, la
+                      misma acción pregunta por reposición en vez de cotizar. */}
+                  <p className="mb-8 mt-3 text-sm text-slate-600">
+                    {product.stock > 0
+                      ? "El mensaje ya lleva el código del producto. Respondemos en horario laboral."
+                      : "Sin stock ahora: escríbenos y te decimos cuándo llega o qué alternativa sirve."}
+                  </p>
+
+                  {product.description && (
+                    <p className="mb-8 max-w-[65ch] text-base leading-relaxed text-slate-600 md:text-lg">
+                      {product.description}
+                    </p>
+                  )}
+
+                  {/* Ficha técnica: lo que se deduce con certeza del nombre y
+                      el código. Las filas sin dato no se pintan. */}
+                  {ficha.length > 0 && (
+                    <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:max-w-md">
+                      {ficha.map(([etiqueta, valor]) => (
+                        <div key={etiqueta}>
+                          <dt className="font-mono text-xs uppercase tracking-[0.2em] text-slate-500">
+                            {etiqueta}
+                          </dt>
+                          <dd className="mt-1 flex items-center gap-2 font-semibold text-ink">
+                            {etiqueta === "Color" && canal && (
+                              <span
+                                aria-hidden="true"
+                                className="size-3 rounded-sm"
+                                style={{
+                                  backgroundColor: `var(--process-${canal})`,
+                                }}
+                              />
+                            )}
+                            {valor}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+
                 </div>
               </div>
 
               {similares.length > 0 && (
-                <section className="mt-20 md:mt-32">
-                  <h2 className="mb-10 font-mono text-xs uppercase tracking-[0.2em] text-slate-500">
+                <section className="mt-20 md:mt-28">
+                  <h2 className="mb-8 font-display text-2xl font-black uppercase tracking-tight text-ink [font-stretch:110%]">
                     También te podría interesar
                   </h2>
                   <ul
@@ -280,10 +352,11 @@ export default function ProductDetailPageClient() {
                   >
                     {similares.map((p) => (
                       <li key={p.id}>
-                        <motion.div
-                          whileHover={{ y: -4 }}
-                          className="group cursor-pointer rounded-lg border border-slate-200 p-4 transition-all hover:border-brand-strong/40 hover:shadow-md"
-                          onClick={() => router.push(`/producto/${p.code}`)}
+                        {/* Link y no div+onClick: así funciona con teclado y
+                            se puede abrir en otra pestaña. */}
+                        <Link
+                          href={`/producto/${encodeURIComponent(p.code)}`}
+                          className="group block h-full rounded-lg border border-slate-200 p-4 transition-all hover:-translate-y-1 hover:border-brand-strong/40 hover:shadow-md"
                         >
                           <div className="relative mb-4 aspect-square">
                             <Image
@@ -294,15 +367,38 @@ export default function ProductDetailPageClient() {
                               sizes="(max-width: 768px) 50vw, 20vw"
                             />
                           </div>
+                          <p className="mb-1 font-mono text-xs text-slate-500">
+                            {p.code}
+                          </p>
                           <h3 className="line-clamp-2 text-sm font-bold leading-tight text-slate-800">
-                            {p.name}
+                            {nombreLimpio(p.name)}
                           </h3>
-                        </motion.div>
+                        </Link>
                       </li>
                     ))}
                   </ul>
                 </section>
               )}
+
+              {/* Barra fija en móvil: la acción principal siempre a mano sin
+                  volver arriba. El chatbot sube su botón en esta página
+                  para no taparla (ver Chatbot.tsx). */}
+              <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 backdrop-blur md:hidden">
+                <button
+                  type="button"
+                  onClick={handleWhatsAppClick}
+                  className="flex min-h-12 w-full items-center justify-center gap-3 rounded-lg bg-whatsapp px-6 text-base font-black text-white transition-colors hover:bg-whatsapp-dark"
+                >
+                  <Image
+                    src="/whatsapp-wh.png"
+                    alt=""
+                    width={22}
+                    height={22}
+                    className="object-contain"
+                  />
+                  Cotizar por WhatsApp
+                </button>
+              </div>
             </>
           )}
         </div>

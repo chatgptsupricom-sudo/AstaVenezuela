@@ -36,7 +36,7 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section className="relative py-24 px-8 bg-gradient-to-b from-transparent via-blue-50/30 to-transparent">
+    <section className="relative py-24 px-8 bg-gradient-to-b from-transparent via-brand/5 to-transparent">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0 }}

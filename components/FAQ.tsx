@@ -41,7 +41,7 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="relative py-24 px-8 bg-gradient-to-b from-blue-50/30 via-transparent to-transparent">
+    <section className="relative py-24 px-8 bg-gradient-to-b from-brand/5 via-transparent to-transparent">
       <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0 }}
@@ -67,11 +67,11 @@ export function FAQ() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.08, duration: 0.5 }}
               viewport={{ once: true }}
-              className="border border-blue-100 rounded-2xl overflow-hidden bg-white hover:border-blue-300 transition-colors"
+              className="border border-brand/20 rounded-2xl overflow-hidden bg-white hover:border-brand/50 transition-colors"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
-                className="w-full px-8 py-6 flex items-center justify-between hover:bg-blue-50/50 transition-colors text-left"
+                className="w-full px-8 py-6 flex items-center justify-between hover:bg-brand/5 transition-colors text-left"
               >
                 <h3 className="font-bold text-gray-900 text-lg pr-4">
                   {faq.question}
@@ -103,7 +103,7 @@ export function FAQ() {
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                   >
-                    <div className="px-8 pb-6 pt-0 text-gray-700 border-t border-blue-100 bg-blue-50/30">
+                    <div className="px-8 pb-6 pt-0 text-gray-700 border-t border-brand/20 bg-brand/5">
                       {faq.answer}
                     </div>
                   </motion.div>

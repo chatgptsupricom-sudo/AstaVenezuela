@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import fotosLocales from "@/lib/product-images.json";
 import xmlrpc from "xmlrpc";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ export async function GET() {
     path: "/xmlrpc/2/object",
   });
 
-  return new Promise((resolve) => {
+  return new Promise<Response>((resolve) => {
     commonClient.methodCall(
       "authenticate",
       [odooConfig.db, odooConfig.username, odooConfig.password, {}],
@@ -89,6 +90,13 @@ export async function GET() {
               // sirve 256px por defecto.
               image: `/api/image/product/${p.id}`,
               code: p.default_code || "",
+              // Para ordenar el catálogo con foto primero. Solo mira las fotos
+              // locales (lib/product-images.json): saber si Odoo tiene imagen
+              // obligaría a traer image_128 de los 162 productos.
+              // ponytail: los pocos con foto solo en Odoo se ordenan como sin foto.
+              conFoto: Boolean(
+                (fotosLocales as Record<string, string>)[p.default_code],
+              ),
               description: p.description_sale || "Sin descripción.",
             }));
 

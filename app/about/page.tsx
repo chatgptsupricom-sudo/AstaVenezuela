@@ -5,6 +5,9 @@ import Image from "next/image";
 import { ControlPatches, ControlStrip } from "@/components/ControlStrip";
 import { FeatureIcon } from "@/components/FeatureIcon";
 import { Navbar } from "@/components/Navbar";
+import { MARCAS } from "@/lib/clasificar";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   Award,
   BarChart3,
@@ -18,6 +21,16 @@ import {
 } from "lucide-react";
 
 export default function AboutPage() {
+  // Mismo conteo en vivo que la home ("162+"): antes aquí decía "200+" fijo
+  // y no coincidía con el catálogo.
+  const [totalCatalogo, setTotalCatalogo] = useState(0);
+  useEffect(() => {
+    fetch("/api/productos/rapidito")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => Array.isArray(data) && setTotalCatalogo(data.length))
+      .catch(() => {});
+  }, []);
+
   return (
     <>
       <Navbar />
@@ -55,9 +68,6 @@ export default function AboutPage() {
           <div className="container mx-auto px-6 max-w-7xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
               >
                 <h2 className="mb-6 font-display text-4xl font-black uppercase tracking-tight text-ink [font-stretch:115%]">
                   Nuestra Historia
@@ -82,9 +92,6 @@ export default function AboutPage() {
               </motion.div>
 
               <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
                 className="relative h-96 flex items-center justify-center"
               >
                 <Image
@@ -103,9 +110,6 @@ export default function AboutPage() {
         <section className="py-16 bg-gradient-to-b from-surface to-white">
           <div className="container mx-auto px-6 max-w-7xl">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
               className="text-center mb-16"
             >
               <h2 className="text-4xl font-black text-brand-strong mb-4">
@@ -157,10 +161,6 @@ export default function AboutPage() {
               ].map((value, idx) => (
                 <motion.div
                   key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  viewport={{ once: true }}
                   className="bg-white rounded-lg p-8 shadow-md border border-gray-100 text-center hover:shadow-lg transition-shadow"
                 >
                   <FeatureIcon icon={value.icon} />
@@ -175,26 +175,28 @@ export default function AboutPage() {
         </section>
 
         {/* Stats Section */}
-        <section className="py-16 bg-gradient-to-r from-brand to-brand-strong text-white">
+        {/* Desde --brand-strong y no desde --brand (#44abff): con blanco,
+            --brand da 2,47:1 y globals.css lo reserva para no-texto. */}
+        <section className="py-16 bg-gradient-to-r from-brand-strong to-brand-navy text-white">
           <div className="container mx-auto px-6 max-w-7xl">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
                 { number: "30+", label: "Años de Experiencia" },
-                { number: "200+", label: "Productos Disponibles" },
+                {
+                  number: totalCatalogo > 0 ? `${totalCatalogo}+` : "···",
+                  label: "Productos Disponibles",
+                },
                 { number: "30K+", label: "Clientes Satisfechos" },
-                { number: "8", label: "Marcas Soportadas" },
+                // Las marcas de impresora que filtra el catálogo.
+                { number: String(MARCAS.length), label: "Marcas Soportadas" },
               ].map((stat, idx) => (
                 <motion.div
                   key={idx}
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: idx * 0.1 }}
-                  viewport={{ once: true }}
                 >
                   <p className="text-5xl lg:text-6xl font-black mb-2">
                     {stat.number}
                   </p>
-                  <p className="text-lg text-white/80">{stat.label}</p>
+                  <p className="text-lg text-white/90">{stat.label}</p>
                 </motion.div>
               ))}
             </div>
@@ -205,9 +207,6 @@ export default function AboutPage() {
         <section className="py-16 bg-white">
           <div className="container mx-auto px-6 max-w-7xl">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
               className="text-center mb-16"
             >
               <h2 className="text-4xl font-black text-brand-strong mb-4">
@@ -241,10 +240,6 @@ export default function AboutPage() {
               ].map((member, idx) => (
                 <motion.div
                   key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  viewport={{ once: true }}
                   className="bg-gradient-to-br from-surface to-white rounded-lg p-8 border border-gray-100 text-center"
                 >
                   <FeatureIcon icon={member.icon} />
@@ -262,9 +257,6 @@ export default function AboutPage() {
         <section className="py-16 bg-surface">
           <div className="container mx-auto px-6 max-w-4xl">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
               className="text-center bg-white rounded-lg p-12 shadow-md border border-gray-100"
             >
               <h2 className="mb-6 font-display text-4xl font-black uppercase tracking-tight text-ink [font-stretch:115%]">
@@ -275,13 +267,14 @@ export default function AboutPage() {
                 distribuidores
               </p>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-10 py-4 bg-brand-strong text-white rounded-lg font-bold text-lg hover:bg-brand-navy transition-colors"
+              {/* Antes era un <button> sin acción: el final del camino de
+                  distribuidor no llevaba a ninguna parte. */}
+              <Link
+                href="/contact?asunto=distribuidor#solicitud"
+                className="focus-on-brand inline-block rounded-lg bg-brand-strong px-10 py-4 text-lg font-bold text-white transition-colors hover:bg-brand-navy"
               >
                 Solicitar Información
-              </motion.button>
+              </Link>
             </motion.div>
           </div>
         </section>

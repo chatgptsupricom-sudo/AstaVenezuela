@@ -1,4 +1,5 @@
 import { odooExecute } from "@/lib/odoo-rpc";
+import fotosLocales from "@/lib/product-images.json";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
@@ -49,6 +50,29 @@ async function logoDeRespaldo() {
   }
 }
 
+// La mayoría de productos no tiene foto en Odoo, pero sí en public/productos.
+// product-images.json empareja default_code -> archivo. Las fotos con nombre
+// de código (CF258A.jpg…) se emparejaron por nombre; las numeradas (1.jpg…)
+// leyendo el código impreso en la etiqueta de cada caja, solo coincidencias
+// exactas. Se excluyen los originales que no son ASTA (p. ej. CRG-057H
+// Canon). Al subir fotos a Odoo, ganan esas: este mapa solo se consulta
+// cuando Odoo no trae imagen.
+async function fotoLocal(codigo: string) {
+  const ruta = (fotosLocales as Record<string, string>)[codigo];
+  if (!ruta) return null;
+  try {
+    const archivo = await readFile(path.join(process.cwd(), "public", ruta));
+    return new NextResponse(new Uint8Array(archivo), {
+      headers: {
+        "Content-Type": "image/jpeg",
+        "Cache-Control": "public, max-age=86400",
+      },
+    });
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -67,11 +91,14 @@ export async function GET(
     "product.template",
     "read",
     [[idProducto]],
-    { fields: [campo] },
+    { fields: [campo, "default_code"] },
   );
 
   const b64 = registros?.[0]?.[campo];
-  if (!b64 || typeof b64 !== "string") return logoDeRespaldo();
+  if (!b64 || typeof b64 !== "string") {
+    const codigo = registros?.[0]?.default_code;
+    return (typeof codigo === "string" && (await fotoLocal(codigo))) || logoDeRespaldo();
+  }
 
   const bytes = Buffer.from(b64, "base64");
 

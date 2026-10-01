@@ -61,7 +61,7 @@ export function NewsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.15, duration: 0.6 }}
               viewport={{ once: true }}
-              className="group bg-white rounded-2xl overflow-hidden border border-blue-100 hover:border-blue-300 transition-all hover:shadow-xl cursor-pointer"
+              className="group bg-white rounded-2xl overflow-hidden border border-brand/20 hover:border-brand/50 transition-all hover:shadow-xl cursor-pointer"
               whileHover={{ translateY: -5 }}
             >
               {/* Image */}
@@ -77,7 +77,7 @@ export function NewsSection() {
               {/* Content */}
               <div className="p-6">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-brand-strong uppercase tracking-wider bg-blue-50 px-3 py-1 rounded-full">
+                  <span className="text-xs font-bold text-brand-strong uppercase tracking-wider bg-brand/10 px-3 py-1 rounded-full">
                     {article.category}
                   </span>
                   <span className="text-xs text-gray-500">{article.date}</span>

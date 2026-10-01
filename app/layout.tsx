@@ -1,5 +1,5 @@
 import { Chatbot } from "@/components/Chatbot";
-import { PageLoader } from "@/components/Loader";
+import { Footer } from "@/components/Footer";
 import { MotionProvider } from "@/components/MotionProvider";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
@@ -68,13 +68,16 @@ export default function RootLayout({
     >
       <body
         suppressHydrationWarning
-        className="font-sans antialiased bg-surface text-slate-900 selection:bg-blue-100 selection:text-blue-900"
+        className="font-sans antialiased bg-surface text-slate-900 selection:bg-brand/25 selection:text-ink"
       >
         <MotionProvider>
-          {/* 2. Añadimos el Loader aquí para que cubra toda la página al cargar */}
-          <PageLoader />
+          {/* Sin <PageLoader />: tapaba la página 1,3 s en cada carga completa
+              sin estar cubriendo ninguna espera real (next/font ya precarga
+              las fuentes). El contenido ahora es visible desde el primer
+              pintado. */}
           <Chatbot />
           <div className="flex flex-col min-h-screen">{children}</div>
+          <Footer />
         </MotionProvider>
 
         {process.env.NODE_ENV === "production" && <Analytics />}

@@ -32,10 +32,6 @@ export function Banner({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ delay: indice * 0.08, duration: 0.5 }}
       className={`group relative flex flex-col justify-between overflow-hidden rounded-xl border p-6 transition-colors ${
         oscuro
           ? "border-white/10 bg-ink-soft hover:border-white/25"
@@ -54,13 +50,13 @@ export function Banner({
           {dato}
         </p>
 
-        <h3
+        <h2
           className={`mt-3 font-display text-lg font-extrabold leading-tight ${
             oscuro ? "text-white" : "text-ink"
           }`}
         >
           {titulo}
-        </h3>
+        </h2>
 
         <p
           className={`mt-2 text-sm leading-relaxed ${
@@ -73,7 +69,7 @@ export function Banner({
 
       <Link
         href={href}
-        className={`mt-6 inline-flex items-center gap-2 self-start text-sm font-bold ${
+        className={`mt-3 inline-flex min-h-11 items-center gap-2 self-start text-sm font-bold ${
           oscuro
             ? "text-white focus-on-brand"
             : "text-brand-strong hover:text-brand-darker"

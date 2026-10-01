@@ -66,9 +66,11 @@
   --process-y: #ffdd00;
   --process-k: #0a1a2f;
 
-  /* Marca de terceros: verde oficial de WhatsApp */
-  --whatsapp: #25d366;
-  --whatsapp-dark: #20ba5a;
+  /* WhatsApp. El verde oficial (#25d366) da 1,98:1 con texto blanco y no
+     pasa AA ni en negrita: los botones usan un verde más profundo de la
+     misma familia (#15803d, 5,02:1). El logo blanco sigue siendo el oficial. */
+  --whatsapp: #15803d;
+  --whatsapp-dark: #116530;
 }
 
 .dark {

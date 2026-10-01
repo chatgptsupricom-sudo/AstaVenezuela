@@ -2,14 +2,17 @@
 
 import { ControlPatches, ControlStrip } from "@/components/ControlStrip";
 import { Navbar } from "@/components/Navbar";
-import { motion } from "framer-motion";
+import {
+  MARCAS,
+  TIPOS,
+  coincideBusqueda,
+  marcaDe,
+  tipoDe,
+} from "@/lib/clasificar";
+import { enlaceWhatsApp } from "@/lib/whatsapp";
 import Image from "next/image";
 import Link from "next/link";
 import { Fragment, useEffect, useMemo, useState } from "react";
-
-// El stagger solo tiene sentido en las tarjetas que ya están en pantalla.
-// Sin tope, con 150 productos la última aparecía a los 7,5 s (150 * 0.05).
-const MAX_TARJETAS_ESCALONADAS = 12;
 
 // Montar 162 tarjetas de golpe es trabajo de layout que nadie llega a ver.
 const POR_PAGINA = 24;
@@ -24,6 +27,67 @@ interface Product {
   image: string;
   code: string;
   description: string;
+  conFoto?: boolean;
+}
+
+// Grupo de botones de filtro (marca o tipo). "Todas"/"Todos" va primero y
+// cada opción muestra cuántos productos quedan si la eliges; las que darían
+// cero resultados no se muestran.
+function FiltroGrupo({
+  titulo,
+  todos,
+  opciones,
+  valor,
+  conteo,
+  onCambio,
+}: {
+  titulo: string;
+  todos: string;
+  opciones: readonly string[];
+  valor: string;
+  conteo: (opcion: string) => number;
+  onCambio: (v: string) => void;
+}) {
+  return (
+    // En móvil, una sola fila deslizable por grupo: con flex-wrap ocupaban
+    // 5 filas y el primer producto quedaba a ~900px del inicio.
+    <div
+      role="group"
+      aria-label={titulo}
+      className="-mx-6 flex items-center gap-2 overflow-x-auto px-6 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+    >
+      <span className="mr-1 w-14 shrink-0 font-mono text-xs uppercase tracking-[0.2em] text-slate-600">
+        {titulo}
+      </span>
+      {[todos, ...opciones].map((op) => {
+        const activa = valor === op;
+        const n = op === todos ? null : conteo(op);
+        if (n === 0 && !activa) return null;
+        return (
+          <button
+            key={op}
+            type="button"
+            aria-pressed={activa}
+            onClick={() => onCambio(op)}
+            className={`min-h-11 shrink-0 whitespace-nowrap rounded-full px-4 font-mono text-xs uppercase tracking-wider transition-colors ${
+              activa
+                ? "focus-on-brand bg-ink text-white"
+                : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+            }`}
+          >
+            {op}
+            {n !== null && (
+              <span
+                className={`ml-2 tabular-nums ${activa ? "text-white/70" : "text-slate-500"}`}
+              >
+                {n}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 function Paginacion({
@@ -132,10 +196,46 @@ export default function CatalogPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [selectedCategory, setSelectedCategory] = useState("Todas");
+  const [marcaSel, setMarcaSel] = useState("Todas");
+  const [tipoSel, setTipoSel] = useState("Todos");
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("name");
+  // "recomendados": primero los que tienen foto. Ordenar por nombre ponía
+  // arriba los "[CRG-047]...", que son justo los que no la tienen.
+  const [sortBy, setSortBy] = useState("recomendados");
   const [pagina, setPagina] = useState(1);
+
+  // Estado inicial desde la URL (/catalog?q=cf258a&tipo=Tóner&marca=HP&p=2):
+  // así enlazan las migas de la ficha y el buscador del inicio, y al volver
+  // atrás desde un producto la búsqueda sigue ahí. Se lee de window y no con
+  // useSearchParams para no tener que envolver la página en <Suspense>.
+  const [urlLeida, setUrlLeida] = useState(false);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const m = q.get("marca");
+    const t = q.get("tipo");
+    if (m && (MARCAS as readonly string[]).includes(m)) setMarcaSel(m);
+    if (t && (TIPOS as readonly string[]).includes(t)) setTipoSel(t);
+    setSearchTerm(q.get("q") ?? "");
+    if (q.get("orden") === "nombre") setSortBy("name");
+    const p = Number(q.get("p"));
+    if (Number.isInteger(p) && p > 1) setPagina(p);
+    setUrlLeida(true);
+  }, []);
+
+  // ...y de vuelta a la URL en cada cambio. replaceState: filtrar no debe
+  // llenar el historial; "atrás" vuelve a la página anterior, no al filtro
+  // anterior. Se omiten los valores por defecto para que la URL quede limpia.
+  useEffect(() => {
+    if (!urlLeida) return;
+    const q = new URLSearchParams();
+    if (searchTerm) q.set("q", searchTerm);
+    if (marcaSel !== "Todas") q.set("marca", marcaSel);
+    if (tipoSel !== "Todos") q.set("tipo", tipoSel);
+    if (sortBy === "name") q.set("orden", "nombre");
+    if (pagina > 1) q.set("p", String(pagina));
+    const qs = q.toString();
+    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+  }, [urlLeida, searchTerm, marcaSel, tipoSel, sortBy, pagina]);
 
   // Fetch a nuestra API creada
   useEffect(() => {
@@ -156,45 +256,53 @@ export default function CatalogPage() {
     fetchProducts();
   }, []);
 
-  // Generamos categorías dinámicas
-  const categories = useMemo(() => {
-    const unique = Array.from(new Set(allProducts.map((p) => p.category)));
-    return ["Todas", ...unique.sort()];
-  }, [allProducts]);
+  // Odoo no trae marca ni tipo en campos propios: se deducen del nombre y
+  // del código una vez por carga (ver lib/clasificar.ts).
+  const clasificados = useMemo(
+    () =>
+      allProducts.map((p) => ({
+        ...p,
+        marca: marcaDe(p.name, p.code),
+        tipo: tipoDe(p.name),
+      })),
+    [allProducts],
+  );
+  type Clasificado = (typeof clasificados)[number];
 
-  // Con una sola categoría real, "Todas" y esa categoría dan el mismo
-  // resultado: el filtro ocupa espacio sin discriminar nada.
-  const showCategoryFilter = categories.length > 2;
+  const buscados = useMemo(() => {
+    if (!searchTerm.trim()) return clasificados;
+    return clasificados.filter((p) =>
+      coincideBusqueda(searchTerm, p.name, p.code),
+    );
+  }, [clasificados, searchTerm]);
 
-  // Aplicamos filtros y búsqueda
+  const pasaMarca = (p: Clasificado, m = marcaSel) =>
+    m === "Todas" || p.marca === m;
+  const pasaTipo = (p: Clasificado, t = tipoSel) =>
+    t === "Todos" || p.tipo === t;
+
   const filteredProducts = useMemo(() => {
-    let filtered = allProducts;
-
-    if (selectedCategory !== "Todas") {
-      filtered = filtered.filter((p) => p.category === selectedCategory);
-    }
-
-    if (searchTerm) {
-      const lower = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.name.toLowerCase().includes(lower) ||
-          p.code.toLowerCase().includes(lower),
-      );
-    }
-
-    return filtered.sort((a, b) => {
-      if (sortBy === "name") return a.name.localeCompare(b.name);
-      if (sortBy === "price") return a.price - b.price;
-      return 0;
+    const filtered = buscados.filter(
+      (p) =>
+        (marcaSel === "Todas" || p.marca === marcaSel) &&
+        (tipoSel === "Todos" || p.tipo === tipoSel),
+    );
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "recomendados" && a.conFoto !== b.conFoto)
+        return a.conFoto ? -1 : 1;
+      return a.name.localeCompare(b.name);
     });
-  }, [allProducts, selectedCategory, searchTerm, sortBy]);
+  }, [buscados, marcaSel, tipoSel, sortBy]);
 
   // Cualquier cambio de filtro invalida la página actual: si estabas en la 5
-  // y filtras a 10 resultados, quedarías mirando una página vacía.
-  useEffect(() => {
-    setPagina(1);
-  }, [selectedCategory, searchTerm, sortBy]);
+  // y filtras a 10 resultados, quedarías mirando una página vacía. Se hace en
+  // cada cambio y no en un efecto, para no pisar la ?p= que llega por URL.
+  const conPagina1 =
+    <T,>(set: (v: T) => void) =>
+    (v: T) => {
+      set(v);
+      setPagina(1);
+    };
 
   const totalPaginas = Math.max(
     1,
@@ -236,12 +344,7 @@ export default function CatalogPage() {
             intermedio del radial cae dentro de ese rango. */}
         <section className="bg-[radial-gradient(140%_140%_at_12%_15%,var(--brand-strong)_0%,var(--ink)_100%)] py-14 text-white">
           <div className="container mx-auto max-w-7xl px-6">
-            <div className="mb-6 flex items-center gap-3">
-              <ControlPatches />
-              <span className="font-mono text-xs uppercase tracking-[0.2em] text-white">
-                Tóner · Tintas · Drums · Chips
-              </span>
-            </div>
+            <ControlPatches className="mb-6" />
 
             <h1 className="font-display text-[clamp(2.5rem,6vw,4.5rem)] font-black uppercase leading-none tracking-tight [font-stretch:115%]">
               Catálogo
@@ -253,14 +356,14 @@ export default function CatalogPage() {
                 htmlFor="catalogo-buscar"
                 className="mb-2 block font-mono text-xs uppercase tracking-[0.2em] text-white"
               >
-                Buscar por nombre o código
+                Buscar por código o modelo
               </label>
               <input
                 id="catalogo-buscar"
                 type="search"
-                placeholder="Ej. A-GI-10Y"
+                placeholder="Ej. CF258A o LaserJet 1160"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => conPagina1(setSearchTerm)(e.target.value)}
                 className="w-full rounded-lg border border-white/15 bg-ink-soft px-5 py-4 font-mono text-white placeholder:text-slate-400"
               />
             </div>
@@ -274,34 +377,35 @@ export default function CatalogPage() {
             {/* Barra de herramientas: con el buscador en la cabecera y una sola
                 categoría, la barra lateral quedaba con un desplegable suelto y
                 robando un cuarto del ancho a los productos. */}
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-4">
-              <div className="flex flex-wrap items-center gap-3">
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-6 border-b border-slate-200 pb-6">
+              {/* min-w-0: como hijo flex, sin esto crecía al ancho de todos
+                  los chips (~780px) y la página se desbordaba en móvil. */}
+              <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto">
                 <h2 className="sr-only">Filtros</h2>
-                {!showCategoryFilter && (
-                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-slate-500">
-                    {filteredProducts.length}{" "}
-                    {filteredProducts.length === 1 ? "producto" : "productos"}
-                  </p>
-                )}
-                {showCategoryFilter &&
-                  categories.map((cat, idx) => {
-                    const isActive = selectedCategory === cat;
-                    return (
-                      <button
-                        key={`category-${cat}-${idx}`}
-                        type="button"
-                        aria-pressed={isActive}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider transition-colors ${
-                          isActive
-                            ? "focus-on-brand bg-ink text-white"
-                            : "bg-white text-slate-600 hover:bg-slate-100"
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    );
-                  })}
+                {/* Cada conteo respeta el otro filtro y la búsqueda: "HP 12"
+                    son los HP que quedan con el tipo elegido. */}
+                <FiltroGrupo
+                  titulo="Marca"
+                  todos="Todas"
+                  opciones={MARCAS}
+                  valor={marcaSel}
+                  conteo={(m) =>
+                    buscados.filter((p) => pasaTipo(p) && pasaMarca(p, m))
+                      .length
+                  }
+                  onCambio={conPagina1(setMarcaSel)}
+                />
+                <FiltroGrupo
+                  titulo="Tipo"
+                  todos="Todos"
+                  opciones={TIPOS}
+                  valor={tipoSel}
+                  conteo={(t) =>
+                    buscados.filter((p) => pasaMarca(p) && pasaTipo(p, t))
+                      .length
+                  }
+                  onCambio={conPagina1(setTipoSel)}
+                />
               </div>
 
               <div className="flex items-center gap-3">
@@ -314,11 +418,11 @@ export default function CatalogPage() {
                 <select
                   id="catalogo-ordenar"
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e) => conPagina1(setSortBy)(e.target.value)}
                   className="rounded-lg border border-slate-300 bg-white px-4 py-2 focus:border-brand-strong"
                 >
-                  <option value="name">Nombre</option>
-                  <option value="price">Precio</option>
+                  <option value="recomendados">Recomendados</option>
+                  <option value="name">Nombre (A–Z)</option>
                 </select>
               </div>
             </div>
@@ -346,10 +450,8 @@ export default function CatalogPage() {
                 </div>
               ) : filteredProducts.length > 0 ? (
                 <>
-                  <motion.ul
+                  <ul
                     role="list"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
                     className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                   >
                     {productosVisibles.map((product, idx) => (
@@ -378,16 +480,7 @@ export default function CatalogPage() {
                             </div>
                           </li>
                         )}
-                        <motion.li
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{
-                            delay:
-                              Math.min(idx, MAX_TARJETAS_ESCALONADAS) * 0.04,
-                          }}
-                          whileHover={{ y: -5 }}
-                          className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all border border-gray-100 flex flex-col"
-                        >
+                        <li className="flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
                           <div className="relative h-48 bg-white p-4 flex items-center justify-center overflow-hidden border-b border-gray-100">
                             <Image
                               src={product.image || "/placeholder.jpg"}
@@ -397,7 +490,7 @@ export default function CatalogPage() {
                               // El endpoint ya entrega una miniatura; evita que
                               // el optimizador vuelva a proxificar esta URL.
                               unoptimized
-                              className="object-contain hover:scale-110 transition-transform"
+                              className="object-contain"
                             />
                             <div className="absolute top-2 right-2 rounded bg-gray-100 px-2 py-1 font-mono text-xs uppercase tracking-wider text-gray-600">
                               {product.code}
@@ -405,8 +498,12 @@ export default function CatalogPage() {
                           </div>
 
                           <div className="p-6 flex-1 flex flex-col">
+                            {/* Tipo y marca en vez de la categoría de Odoo,
+                                que es la misma para todo el catálogo. */}
                             <p className="text-xs text-brand-strong font-semibold mb-2 uppercase line-clamp-1">
-                              {product.category}
+                              {[product.tipo, product.marca]
+                                .filter(Boolean)
+                                .join(" · ") || product.category}
                             </p>
                             {/* Sin uppercase: son nombres tecnicos largos que
                                 pierden legibilidad forzados a mayusculas. */}
@@ -414,23 +511,37 @@ export default function CatalogPage() {
                               {product.name}
                             </h3>
 
-                            <Link
-                              href={`/producto/${product.code}`}
-                              className="w-full text-center px-4 py-2 bg-brand-strong text-white rounded-lg font-bold hover:bg-brand-darker transition-colors mt-auto block focus-on-brand"
-                            >
-                              Ver Detalles
-                              {/* 150 enlaces idénticos son inservibles en un lector
-                              de pantalla: le damos destino a cada uno. */}
-                              <span className="sr-only">
-                                {" "}
-                                de {product.name}
-                              </span>
-                            </Link>
+                            {/* Dos acciones: ver la ficha o cotizar directo por
+                                WhatsApp con el código ya escrito, sin pasar por
+                                la ficha (el revendedor que ya sabe lo que quiere). */}
+                            <div className="mt-auto flex gap-2">
+                              <Link
+                                href={`/producto/${product.code}`}
+                                className="flex min-h-11 flex-1 items-center justify-center rounded-lg bg-brand-strong px-4 font-bold text-white transition-colors hover:bg-brand-darker focus-on-brand"
+                              >
+                                Ver Detalles
+                                {/* 150 enlaces idénticos son inservibles en un
+                                    lector de pantalla: le damos destino a cada uno. */}
+                                <span className="sr-only"> de {product.name}</span>
+                              </Link>
+                              <a
+                                href={enlaceWhatsApp(
+                                  `Hola, quiero cotizar: ${product.name} (código ${product.code})`,
+                                )}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`Cotizar ${product.name} por WhatsApp`}
+                                className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-whatsapp px-4 font-bold text-white transition-colors hover:bg-whatsapp-dark"
+                              >
+                                <Image src="/whatsapp-wh.png" alt="" width={18} height={18} />
+                                <span aria-hidden="true">Cotizar</span>
+                              </a>
+                            </div>
                           </div>
-                        </motion.li>
+                        </li>
                       </Fragment>
                     ))}
-                  </motion.ul>
+                  </ul>
 
                   <p className="mt-8 text-center text-sm text-gray-600">
                     Mostrando {desde + 1}–
@@ -445,10 +556,39 @@ export default function CatalogPage() {
                   />
                 </>
               ) : (
-                <div role="status" className="text-center py-12">
+                <div role="status" className="py-16 text-center">
                   <p className="text-xl text-gray-600">
-                    No hay productos que coincidan con tu búsqueda
+                    No hay productos que coincidan con tu búsqueda.
                   </p>
+                  {/* Que no aparezca no significa que ASTA no lo tenga: el
+                      catálogo web es una parte del inventario. */}
+                  <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                    {searchTerm.trim() && (
+                      <a
+                        href={enlaceWhatsApp(
+                          `Hola, busco "${searchTerm.trim()}" y no lo encuentro en el catálogo. ¿Lo tienen?`,
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex min-h-11 items-center gap-2 rounded-lg bg-whatsapp px-6 font-bold text-white hover:bg-whatsapp-dark"
+                      >
+                        <Image src="/whatsapp-wh.png" alt="" width={18} height={18} />
+                        Pregúntanos por «{searchTerm.trim()}»
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchTerm("");
+                        setMarcaSel("Todas");
+                        setTipoSel("Todos");
+                        setPagina(1);
+                      }}
+                      className="min-h-11 rounded-lg border border-slate-300 bg-white px-6 font-bold text-ink hover:bg-slate-50"
+                    >
+                      Quitar filtros
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

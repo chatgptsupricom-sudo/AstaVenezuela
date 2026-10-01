@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     path: "/xmlrpc/2/object",
   });
 
-  return new Promise((resolve) => {
+  return new Promise<Response>((resolve) => {
     commonClient.methodCall(
       "authenticate",
       [odooConfig.db, odooConfig.username, odooConfig.password, {}],

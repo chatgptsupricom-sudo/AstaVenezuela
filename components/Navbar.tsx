@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { enlaceWhatsApp, MENSAJE_GENERAL } from "@/lib/whatsapp";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -48,21 +49,25 @@ export function Navbar() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-slate-600 font-bold text-sm tracking-wide hover:text-blue-600 transition-colors relative group py-2"
+              className="text-slate-600 font-bold text-sm tracking-wide hover:text-brand-strong transition-colors relative group py-2"
             >
               {item.label}
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all group-hover:w-full" />
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-brand-strong transition-all group-hover:w-full" />
             </Link>
           ))}
         </div>
 
-        {/* CTA Button Minimalista */}
-        <Link
-          href="/contact"
-          className="hidden md:block px-8 py-3 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all"
+        {/* La acción principal del sitio es cotizar por WhatsApp. Antes este
+            botón decía "Contactar" y repetía el enlace "Contacto" de al lado. */}
+        <a
+          href={enlaceWhatsApp(MENSAJE_GENERAL)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden md:flex items-center gap-2 px-6 py-3 bg-whatsapp text-white rounded-xl font-bold text-sm hover:bg-whatsapp-dark transition-colors"
         >
-          Contactar
-        </Link>
+          <Image src="/whatsapp-wh.png" alt="" width={18} height={18} />
+          Cotizar por WhatsApp
+        </a>
 
         {/* Mobile Menu Button */}
         <motion.button
@@ -72,7 +77,7 @@ export function Navbar() {
           aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={mobileMenuOpen}
           aria-controls="menu-movil"
-          className="md:hidden p-3 -mr-3 text-blue-600"
+          className="md:hidden p-3 -mr-3 text-brand-strong"
         >
           <div className="space-y-1.5">
             <motion.span
@@ -114,13 +119,16 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/contact"
+            <a
+              href={enlaceWhatsApp(MENSAJE_GENERAL)}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full mt-4 py-4 bg-blue-600 text-white rounded-2xl text-lg font-bold text-center shadow-lg shadow-blue-600/20 focus-on-brand"
+              className="w-full mt-4 py-4 flex items-center justify-center gap-3 bg-whatsapp text-white rounded-2xl text-lg font-bold hover:bg-whatsapp-dark"
             >
-              Contactar ahora
-            </Link>
+              <Image src="/whatsapp-wh.png" alt="" width={22} height={22} />
+              Cotizar por WhatsApp
+            </a>
           </nav>
         </motion.div>
       )}

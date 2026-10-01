@@ -67,7 +67,7 @@ export function ProductGallery() {
             className={`px-6 py-2 rounded-full font-semibold transition-all ${
               activeCategory === category.id
                 ? 'bg-brand-strong text-white shadow-lg'
-                : 'bg-white text-brand-strong border border-brand-strong hover:bg-blue-50'
+                : 'bg-white text-brand-strong border border-brand-strong hover:bg-brand/10'
             }`}
           >
             {category.name}
@@ -85,7 +85,7 @@ export function ProductGallery() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ delay: idx * 0.1 }}
-            className="group relative bg-white rounded-2xl overflow-hidden border border-blue-100 hover:border-blue-300 transition-all hover:shadow-xl"
+            className="group relative bg-white rounded-2xl overflow-hidden border border-brand/20 hover:border-brand/50 transition-all hover:shadow-xl"
           >
             {/* Image Background */}
             <div className="h-40 bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center overflow-hidden">

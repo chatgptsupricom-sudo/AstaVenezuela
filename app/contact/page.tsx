@@ -3,20 +3,80 @@
 import { Banner } from "@/components/Banner";
 import { ControlPatches, ControlStrip } from "@/components/ControlStrip";
 import { Navbar } from "@/components/Navbar";
+import { enlaceWhatsApp, MENSAJE_GENERAL } from "@/lib/whatsapp";
 import { motion } from "framer-motion";
 import { CheckCircle2, Globe, Mail, Phone, Send } from "lucide-react";
-import { useState } from "react";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
-export default function ContactPage() {
+const ASUNTOS = ["consulta", "distribuidor", "soporte", "otro"] as const;
+
+const VACIO = {
+  name: "",
+  email: "",
+  phone: "",
+  subject: "",
+  message: "",
+  // Solo para "distribuidor": lo mínimo para preparar condiciones.
+  negocio: "",
+  ciudad: "",
+  volumen: "",
+};
+
+// Mismo estilo para todos los campos. Esquinas rounded-xl como el resto del
+// sitio (antes eran píldoras de 2rem).
+const CAMPO =
+  "w-full rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 font-semibold text-slate-900 placeholder:text-slate-500 transition-colors focus:border-brand-strong focus:ring-2 focus:ring-brand-strong/30 disabled:opacity-50";
+const ETIQUETA =
+  "text-xs font-black uppercase tracking-[0.2em] text-slate-600";
+
+function Campo({
+  id,
+  etiqueta,
+  opcional,
+  children,
+}: {
+  id: string;
+  etiqueta: string;
+  opcional?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className={ETIQUETA}>
+        {etiqueta}
+        {opcional && (
+          <span className="ml-1 font-medium normal-case tracking-normal text-slate-500">
+            (opcional)
+          </span>
+        )}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function Contacto() {
+  const params = useSearchParams();
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isSending, setIsSending] = useState(false); // Estado para deshabilitar botón durante el envío
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    subject: "",
-    message: "",
-  });
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState(false);
+  const [formData, setFormData] = useState(VACIO);
+
+  // /contact?asunto=distribuidor (o soporte, consulta…) deja el asunto ya
+  // elegido. Es a donde apuntan todos los enlaces de "ser distribuidor" del
+  // sitio. Reacciona también a los banners de esta misma página, que cambian
+  // el parámetro sin recargar.
+  const asuntoUrl = params.get("asunto");
+  useEffect(() => {
+    if (asuntoUrl && (ASUNTOS as readonly string[]).includes(asuntoUrl)) {
+      setFormData((prev) => ({ ...prev, subject: asuntoUrl }));
+      setIsSubmitted(false);
+    }
+  }, [asuntoUrl]);
+
+  const esDistribuidor = formData.subject === "distribuidor";
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -27,35 +87,36 @@ export default function ContactPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const elegirDistribucion = () => {
+    setFormData((prev) => ({ ...prev, subject: "distribuidor" }));
+    document.getElementById("contacto-name")?.focus();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSending(true);
+    setSendError(false);
+
+    // Los campos de distribuidor solo viajan si el asunto lo es.
+    const datos = esDistribuidor
+      ? formData
+      : { ...formData, negocio: "", ciudad: "", volumen: "" };
 
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos),
       });
+      if (!response.ok) throw new Error("Error en la petición de envío");
 
-      if (!response.ok) {
-        throw new Error("Error en la petición de envío");
-      }
-
+      // El aviso de éxito se queda: antes desaparecía a los 4 s y el
+      // visitante no sabía si el envío había funcionado.
       setIsSubmitted(true);
-      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
-
-      // Mantiene el aviso de éxito por 4 segundos
-      setTimeout(() => {
-        setIsSubmitted(false);
-      }, 4000);
+      setFormData(VACIO);
     } catch (error) {
       console.error("Error al enviar el formulario:", error);
-      alert(
-        "Hubo un error al enviar tu solicitud. Por favor, inténtalo de nuevo.",
-      );
+      setSendError(true);
     } finally {
       setIsSending(false);
     }
@@ -65,14 +126,8 @@ export default function ContactPage() {
     <>
       <Navbar />
       <main className="bg-white min-h-screen pt-24 overflow-hidden">
-        {/* --- HEADER SECCIÓN --- */}
-        {/* Base en --ink (#0a1a2f, la tinta oscura original), con un
-            brillo radial hacia --brand-strong desde donde arranca el texto
-            -- como el degradado anterior pero con el par de tonos correcto.
-            Sin cálculo de tope esta vez: --ink y --brand-strong ya estaban
-            verificados para texto blanco en 17,48:1 y 5,71:1 respectivamente
-            (medidos antes en esta misma sesión), así que cualquier punto
-            intermedio del radial cae dentro de ese rango. */}
+        {/* Base en --ink con brillo radial hacia --brand-strong: texto blanco
+            entre 5,71:1 y 17,48:1 en cualquier punto del degradado. */}
         <section className="bg-[radial-gradient(140%_140%_at_12%_15%,var(--brand-strong)_0%,var(--ink)_100%)] py-14 text-white">
           <div className="container mx-auto max-w-7xl px-6">
             <div className="mb-6 flex items-center gap-3">
@@ -94,7 +149,8 @@ export default function ContactPage() {
         <ControlStrip alto="h-2" />
 
         {/* Banners por tipo de consulta: cada uno llega con una pregunta
-            distinta y con distinta urgencia. */}
+            distinta. Los de distribución y soporte dejan el asunto elegido
+            y bajan directo al formulario. */}
         <div className="bg-surface py-10">
           <div className="container mx-auto max-w-7xl px-6">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -105,259 +161,363 @@ export default function ContactPage() {
                 descripcion="Busca por código o por modelo de impresora y pide cotización."
                 href="/catalog"
                 accion="Ir al catálogo"
-                indice={0}
               />
               <Banner
                 canal="m"
                 dato="Distribución"
                 titulo="Quiero vender ASTA"
                 descripcion="Condiciones para centros de copiado, mayoristas y puntos de venta."
-                href="#formulario"
+                href="/contact?asunto=distribuidor#solicitud"
                 accion="Escribir al equipo"
-                indice={1}
               />
               <Banner
                 canal="y"
                 dato="Soporte"
                 titulo="Tengo un problema técnico"
                 descripcion="Rendimiento por debajo de lo esperado, chips o compatibilidad."
-                href="#formulario"
+                href="/contact?asunto=soporte#solicitud"
                 accion="Reportar el caso"
-                indice={2}
               />
             </div>
           </div>
         </div>
 
-        <div id="formulario" className="container mx-auto max-w-7xl px-6 py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-            {/* --- INFO DE CONTACTO (LADO IZQUIERDO) --- */}
-            <div className="lg:col-span-4 space-y-12">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="space-y-8"
-              >
+        <div className="container mx-auto max-w-7xl px-6 py-16 lg:py-20">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
+            {/* --- CANALES (LADO IZQUIERDO) --- */}
+            <div className="space-y-10 lg:col-span-4">
+              <div className="space-y-6">
                 <h2 className="font-display text-3xl font-black uppercase tracking-tight text-ink [font-stretch:115%]">
                   Canales Directos
                 </h2>
 
-                <div className="flex items-start gap-6 group">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
-                    <Phone size={20} />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 uppercase text-xs tracking-widest mb-1">
-                      Llámanos
-                    </h4>
-                    <p className="text-lg text-slate-600 font-semibold">
-                      +58 (422)-8008204
-                    </p>
-                  </div>
-                </div>
+                {/* WhatsApp primero: es el canal de cotización. */}
+                <a
+                  href={enlaceWhatsApp(MENSAJE_GENERAL)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-h-14 items-center justify-center gap-3 rounded-xl bg-whatsapp px-6 py-4 text-base font-black text-white transition-colors hover:bg-whatsapp-dark"
+                >
+                  <Image src="/whatsapp-wh.png" alt="" width={22} height={22} />
+                  Cotizar por WhatsApp
+                </a>
 
-                <div className="flex items-start gap-6 group">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
-                    <Mail size={20} />
+                {[
+                  {
+                    icono: Phone,
+                    titulo: "Llámanos",
+                    valor: "+58 (422)-8008204",
+                    href: "tel:+584228008204",
+                  },
+                  {
+                    icono: Mail,
+                    titulo: "Escríbenos",
+                    valor: "webstore@astavenezuela.com",
+                    href: "mailto:webstore@astavenezuela.com",
+                    nota: "Respuesta en menos de 24h",
+                  },
+                  {
+                    icono: Globe,
+                    titulo: "Cobertura",
+                    valor: "Toda Venezuela",
+                    nota: "Distribución nacional garantizada",
+                  },
+                ].map(({ icono: Icono, titulo, valor, href, nota }) => (
+                  <div key={titulo} className="flex items-start gap-5">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand-strong">
+                      <Icono size={20} aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-900">
+                        {titulo}
+                      </h3>
+                      {href ? (
+                        <a
+                          href={href}
+                          className="break-words text-lg font-semibold text-brand-strong underline-offset-4 hover:underline"
+                        >
+                          {valor}
+                        </a>
+                      ) : (
+                        <p className="text-lg font-semibold text-slate-600">
+                          {valor}
+                        </p>
+                      )}
+                      {nota && <p className="text-sm text-slate-500">{nota}</p>}
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 uppercase text-xs tracking-widest mb-1">
-                      Escríbenos
-                    </h4>
-                    <p className="text-lg text-slate-600 font-semibold">
-                      webstore@astavenezuela.com
-                    </p>
-                    <p className="text-sm text-slate-400">
-                      Respuesta en menos de 24h
-                    </p>
-                  </div>
-                </div>
+                ))}
+              </div>
 
-                <div className="flex items-start gap-6 group">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
-                    <Globe size={20} />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 uppercase text-xs tracking-widest mb-1">
-                      Cobertura
-                    </h4>
-                    <p className="text-lg text-slate-600 font-semibold">
-                      Toda Venezuela
-                    </p>
-                    <p className="text-sm text-slate-400">
-                      Distribución nacional garantizada
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Card informativa minimalista */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className="p-8 rounded-[2rem] bg-blue-600 text-white shadow-2xl shadow-blue-200 relative overflow-hidden"
-              >
-                <div className="relative z-10">
-                  <h3 className="text-xl font-bold mb-4">
-                    ¿Quieres ser distribuidor?
-                  </h3>
-                  <p className="text-blue-100 mb-6 text-sm leading-relaxed">
-                    Únete a la red de aliados más grande del país y obtén
-                    beneficios exclusivos de la marca #1.
-                  </p>
-                  <button className="w-full py-3 bg-white text-blue-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-blue-50 transition-colors">
-                    Saber más
-                  </button>
-                </div>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-              </motion.div>
+              <div className="rounded-2xl bg-brand-strong p-8 text-white">
+                <h3 className="mb-4 text-xl font-bold">
+                  ¿Quieres ser distribuidor?
+                </h3>
+                <p className="mb-6 text-sm leading-relaxed text-white/90">
+                  Únete a la red de aliados más grande del país y obtén
+                  beneficios exclusivos de la marca #1.
+                </p>
+                <button
+                  type="button"
+                  onClick={elegirDistribucion}
+                  className="focus-on-brand w-full rounded-xl bg-white py-3 text-xs font-black uppercase tracking-widest text-brand-strong transition-colors hover:bg-surface-alt"
+                >
+                  Saber más
+                </button>
+              </div>
             </div>
 
-            {/* --- FORMULARIO (LADO DERECHO) --- */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="lg:col-span-8"
+            {/* --- FORMULARIO (LADO DERECHO) ---
+                scroll-mt: el navbar fijo mide 80px; sin margen, el ancla
+                #solicitud dejaba el título del formulario debajo de él. */}
+            <div
+              id="solicitud"
+              className="scroll-mt-28 lg:col-span-8"
             >
-              <div className="bg-white rounded-[3.5rem] p-10 md:p-16 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.12)] border border-slate-100 relative overflow-hidden">
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_1px_3px_rgba(10,26,47,0.06)] sm:p-10 md:p-12">
                 {isSubmitted ? (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
+                    initial={{ opacity: 0, scale: 0.97 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center justify-center py-20 text-center"
+                    role="status"
+                    className="flex flex-col items-center justify-center py-16 text-center"
                   >
-                    <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-8">
-                      <CheckCircle2 size={48} />
+                    <div className="mb-8 flex size-24 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                      <CheckCircle2 size={48} aria-hidden="true" />
                     </div>
-                    <h3 className="text-4xl font-black text-slate-900 mb-3">
+                    <h2 className="mb-3 text-4xl font-black text-slate-900">
                       Solicitud Enviada
-                    </h3>
-                    <p className="text-lg text-slate-500 font-medium">
+                    </h2>
+                    <p className="text-lg font-medium text-slate-600">
                       Un asesor especializado se pondrá en contacto con usted.
                     </p>
+                    <p className="mt-2 text-slate-600">
+                      ¿Lo necesitas antes? Escríbenos por WhatsApp.
+                    </p>
+                    <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                      <a
+                        href={enlaceWhatsApp(MENSAJE_GENERAL)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex min-h-12 items-center justify-center gap-3 rounded-xl bg-whatsapp px-6 font-bold text-white hover:bg-whatsapp-dark"
+                      >
+                        <Image src="/whatsapp-wh.png" alt="" width={20} height={20} />
+                        Escribir por WhatsApp
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setIsSubmitted(false)}
+                        className="min-h-12 rounded-xl border border-slate-300 px-6 font-bold text-ink hover:bg-slate-50"
+                      >
+                        Enviar otra solicitud
+                      </button>
+                    </div>
                   </motion.div>
                 ) : (
                   <>
-                    <div className="mb-12">
-                      <h2 className="mb-3 font-display text-4xl font-black uppercase tracking-tight text-ink [font-stretch:115%]">
+                    <div className="mb-10">
+                      <h2 className="mb-3 font-display text-3xl font-black uppercase tracking-tight text-ink [font-stretch:115%] sm:text-4xl">
                         Gestión de Solicitudes
                       </h2>
-                      <p className="text-lg text-slate-500 font-medium">
+                      <p className="text-lg font-medium text-slate-600">
                         Inicie una conversación con nuestro equipo corporativo.
                       </p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-10">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2">
-                            Nombre Completo
-                          </label>
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                        <Campo id="contacto-name" etiqueta="Nombre Completo">
                           <input
                             type="text"
+                            id="contacto-name"
                             name="name"
+                            autoComplete="name"
                             value={formData.name}
                             onChange={handleChange}
                             required
                             disabled={isSending}
-                            className="w-full px-8 py-5 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 placeholder:text-slate-300 disabled:opacity-50"
+                            className={CAMPO}
                             placeholder="Nombre Apellido"
                           />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2">
-                            Email Corporativo
-                          </label>
+                        </Campo>
+                        <Campo id="contacto-email" etiqueta="Email Corporativo">
                           <input
                             type="email"
+                            id="contacto-email"
                             name="email"
+                            autoComplete="email"
                             value={formData.email}
                             onChange={handleChange}
                             required
                             disabled={isSending}
-                            className="w-full px-8 py-5 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 placeholder:text-slate-300 disabled:opacity-50"
+                            className={CAMPO}
                             placeholder="correo@empresa.com"
                           />
-                        </div>
+                        </Campo>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2">
-                            Teléfono
-                          </label>
+                      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                        <Campo id="contacto-phone" etiqueta="Teléfono" opcional>
                           <input
                             type="tel"
+                            id="contacto-phone"
                             name="phone"
+                            autoComplete="tel"
                             value={formData.phone}
                             onChange={handleChange}
                             disabled={isSending}
-                            className="w-full px-8 py-5 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 placeholder:text-slate-300 disabled:opacity-50"
+                            className={CAMPO}
                             placeholder="+58 4XX XXXXXXX"
                           />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2">
-                            Asunto
-                          </label>
+                        </Campo>
+                        <Campo id="contacto-subject" etiqueta="Asunto">
                           <select
+                            id="contacto-subject"
                             name="subject"
                             value={formData.subject}
                             onChange={handleChange}
                             required
                             disabled={isSending}
-                            className="w-full px-8 py-5 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 appearance-none cursor-pointer disabled:opacity-50"
+                            className={`${CAMPO} cursor-pointer`}
                           >
                             <option value="">Seleccionar...</option>
-                            <option value="consulta">
-                              Consulta de Producto
-                            </option>
+                            <option value="consulta">Consulta de Producto</option>
                             <option value="distribuidor">
                               Alianza de Distribución
                             </option>
                             <option value="soporte">Soporte Técnico</option>
                             <option value="otro">Otro Asunto</option>
                           </select>
-                        </div>
+                        </Campo>
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2">
-                          ¿Cómo podemos ayudarte?
-                        </label>
+                      {/* Solo para distribución: lo que el equipo necesita
+                          para preparar condiciones sin una segunda ronda. */}
+                      {esDistribuidor && (
+                        <fieldset className="grid grid-cols-1 gap-8 rounded-xl border border-dashed border-slate-300 p-5 md:grid-cols-3 md:items-end">
+                          <legend className={`${ETIQUETA} px-2`}>
+                            Sobre tu negocio
+                          </legend>
+                          <Campo id="contacto-negocio" etiqueta="Tipo de negocio">
+                            <select
+                              id="contacto-negocio"
+                              name="negocio"
+                              value={formData.negocio}
+                              onChange={handleChange}
+                              required
+                              disabled={isSending}
+                              className={`${CAMPO} cursor-pointer`}
+                            >
+                              <option value="">Seleccionar...</option>
+                              <option>Tienda de tecnología</option>
+                              <option>Centro de copiado</option>
+                              <option>Imprenta</option>
+                              <option>Distribuidor o mayorista</option>
+                              <option>Otro</option>
+                            </select>
+                          </Campo>
+                          <Campo id="contacto-ciudad" etiqueta="Ciudad">
+                            <input
+                              type="text"
+                              id="contacto-ciudad"
+                              name="ciudad"
+                              autoComplete="address-level2"
+                              value={formData.ciudad}
+                              onChange={handleChange}
+                              required
+                              disabled={isSending}
+                              className={CAMPO}
+                              placeholder="Ej. Valencia"
+                            />
+                          </Campo>
+                          <Campo
+                            id="contacto-volumen"
+                            etiqueta="Volumen mensual"
+                            opcional
+                          >
+                            <select
+                              id="contacto-volumen"
+                              name="volumen"
+                              value={formData.volumen}
+                              onChange={handleChange}
+                              disabled={isSending}
+                              className={`${CAMPO} cursor-pointer`}
+                            >
+                              <option value="">Seleccionar...</option>
+                              <option>Menos de 50 unidades</option>
+                              <option>50 a 200 unidades</option>
+                              <option>Más de 200 unidades</option>
+                            </select>
+                          </Campo>
+                        </fieldset>
+                      )}
+
+                      <Campo id="contacto-message" etiqueta="¿Cómo podemos ayudarte?">
                         <textarea
+                          id="contacto-message"
                           name="message"
                           value={formData.message}
                           onChange={handleChange}
                           required
                           disabled={isSending}
                           rows={4}
-                          className="w-full px-8 py-6 bg-slate-50 border-none rounded-[2.5rem] focus:ring-2 focus:ring-blue-500 transition-all font-semibold text-slate-900 placeholder:text-slate-300 resize-none disabled:opacity-50"
+                          className={`${CAMPO} resize-none`}
                           placeholder="Escriba aquí su requerimiento..."
                         />
-                      </div>
+                      </Campo>
 
-                      <motion.button
-                        whileHover={!isSending ? { scale: 1.01, y: -2 } : {}}
-                        whileTap={!isSending ? { scale: 0.98 } : {}}
+                      {sendError && (
+                        <p
+                          role="alert"
+                          className="rounded-xl bg-red-50 px-6 py-4 text-sm font-semibold text-red-700"
+                        >
+                          No pudimos enviar tu solicitud. Revisa tu conexión e
+                          inténtalo de nuevo, o escríbenos a{" "}
+                          <a
+                            href="mailto:webstore@astavenezuela.com"
+                            className="underline"
+                          >
+                            webstore@astavenezuela.com
+                          </a>{" "}
+                          o por{" "}
+                          <a
+                            href={enlaceWhatsApp(MENSAJE_GENERAL)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline"
+                          >
+                            WhatsApp
+                          </a>
+                          .
+                        </p>
+                      )}
+
+                      <button
                         type="submit"
                         disabled={isSending}
-                        className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] flex items-center justify-center gap-4 hover:bg-blue-600 transition-all shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)] hover:shadow-blue-500/30 disabled:bg-slate-400 disabled:cursor-not-allowed"
+                        className="flex w-full items-center justify-center gap-3 rounded-xl bg-ink py-5 text-sm font-black uppercase tracking-[0.15em] text-white transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:bg-slate-400"
                       >
-                        <Send size={20} />
+                        <Send size={18} aria-hidden="true" />
                         {isSending ? "Enviando..." : "Enviar Solicitud"}
-                      </motion.button>
+                      </button>
                     </form>
                   </>
                 )}
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </main>
     </>
+  );
+}
+
+// useSearchParams necesita un <Suspense> por encima en el App Router; sin él
+// el build falla al prerenderizar la página.
+export default function ContactPage() {
+  return (
+    <Suspense>
+      <Contacto />
+    </Suspense>
   );
 }

@@ -2,9 +2,37 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import path from "path";
 
+// El correo es HTML: todo lo que escribe el visitante se escapa antes de
+// insertarlo. Sin esto, un nombre como "<a href=...>" llegaba al buzón como
+// un enlace real (inyección de HTML en el correo).
+const esc = (v: unknown) =>
+  String(v ?? "")
+    .slice(0, 5000)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 export async function POST(request: Request) {
   try {
-    const { name, email, phone, subject, message } = await request.json();
+    const body = await request.json();
+    const name = esc(body.name);
+    const email = esc(body.email);
+    const phone = esc(body.phone);
+    const subject = esc(body.subject || "otro");
+    const message = esc(body.message);
+    // Solo llegan con el asunto "distribuidor".
+    const negocio = esc(body.negocio);
+    const ciudad = esc(body.ciudad);
+    const volumen = esc(body.volumen);
+
+    if (!name || !email || !message) {
+      return NextResponse.json(
+        { error: "Faltan datos obligatorios." },
+        { status: 400 },
+      );
+    }
 
     const emailPassword = process.env.EMAIL_PASSWORD;
 
@@ -36,7 +64,7 @@ export async function POST(request: Request) {
     const mailOptions = {
       from: `"ASTA WEB" <webstore@astavenezuela.com>`,
       to: "webstore@astavenezuela.com",
-      replyTo: email,
+      replyTo: body.email,
       subject: `Contacto AstaWeb [${subject.toUpperCase()}]: ${name}`,
 
       // 🎨 DISEÑO ULTRA MODERNO, MINIMALISTA Y PROFESIONAL
@@ -73,6 +101,19 @@ export async function POST(request: Request) {
                   <span style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; width: 120px; display: inline-block;">Asunto</span>
                   <span style="font-size: 14px; font-weight: 600; color: #475569; background-color: #f1f5f9; padding: 4px 10px; border-radius: 8px; text-transform: capitalize;">${subject}</span>
                 </div>
+                ${[
+                  ["Negocio", negocio],
+                  ["Ciudad", ciudad],
+                  ["Volumen mensual", volumen],
+                ]
+                  .filter(([, v]) => v)
+                  .map(
+                    ([et, v]) => `                <div style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between;">
+                  <span style="font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; width: 120px; display: inline-block;">${et}</span>
+                  <span style="font-size: 14px; font-weight: 600; color: #1e293b;">${v}</span>
+                </div>`,
+                  )
+                  .join("")}
               </div>
 
               <div style="background-color: #f8fafc; border-radius: 16px; padding: 24px; border: 1px solid #edf2f7;">

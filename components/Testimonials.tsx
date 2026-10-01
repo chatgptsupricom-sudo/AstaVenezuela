@@ -52,7 +52,7 @@ export function Testimonials() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.2, duration: 0.6 }}
               viewport={{ once: true }}
-              className="bg-white rounded-2xl p-8 border border-blue-100 hover:border-blue-300 hover:shadow-lg transition-all"
+              className="bg-white rounded-2xl p-8 border border-brand/20 hover:border-brand/50 hover:shadow-lg transition-all"
             >
               <div className="mb-4 flex gap-1" aria-label="5 de 5 estrellas">
                 {[...Array(5)].map((_, i) => (

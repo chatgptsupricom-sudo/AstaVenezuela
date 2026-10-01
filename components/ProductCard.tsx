@@ -17,10 +17,10 @@ export function ProductCard({ name, code, category, image, index }: ProductCardP
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, duration: 0.5 }}
       whileHover={{ y: -10, boxShadow: '0 20px 40px rgba(11, 99, 205, 0.3)' }}
-      className="relative group bg-white rounded-2xl overflow-hidden border border-blue-100 hover:border-blue-300 transition-colors"
+      className="relative group bg-white rounded-2xl overflow-hidden border border-brand/20 hover:border-brand/50 transition-colors"
     >
       {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-br from-brand/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       {/* Image Container */}
       <div className="relative h-48 bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center overflow-hidden">

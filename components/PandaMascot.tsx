@@ -9,7 +9,7 @@ import { useScroll } from 'framer-motion';
 import * as THREE from 'three';
 
 export function PandaMascot() {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<any>(null) // THREE se declara como any en types/three.d.ts;
   const { scrollY } = useScroll();
 
   useFrame(() => {

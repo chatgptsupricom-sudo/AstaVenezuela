@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     // `unoptimized: true` desactivaba el optimizador en TODO el sitio: las
     // imágenes se servían a tamaño completo y sin convertir a WebP/AVIF.
